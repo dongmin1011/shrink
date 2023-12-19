@@ -16,17 +16,65 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 from dotenv import load_dotenv
 
+from .utils.user_utils import generate_random_nickname
+from .models import User
 
 NCP_ACCESS_KEY = os.getenv('NCP_ACCESS_KEY')
 NCP_SECRET_KEY = os.getenv('NCP_SECRET_KEY')
 NCP_SENS_SERVICE_ID = os.getenv('NCP_SENS_SERVICE_ID')
 NCP_SENS_SEND_PHONE_NO = os.getenv('NCP_SENS_SEND_PHONE_NO')
 
-
-
 def index(req):
     if req.method == "GET":
         return JsonResponse({'response': True})
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def register(req):
+    try:
+        data = json.loads(req.body)
+        phone = data.get('phone')
+        nickname = None
+        profile_url = None
+
+        '''
+        설명: nickname, profile_url은 초기 회원가입시 입력받지 않고 랜덤으로 지정해주기 때문에 주석으로 처리한다.
+        작성일: 2023.12.19
+        작성자: yujin
+        '''
+        # nickname = data.get('nickname')
+        # profile_url = data.get('profile_url')
+
+        '''
+        설명: 프로필 이미지를 랜덤으로 생성하는 dicebear api를 사용한다.
+            랜덤 프로필 이미지를 서버에서 구현하면 클라이언트는 편하겠지만, 
+            추후 랜덤 이미지를 변경하고자 할 때 서버에 이미 적용된 랜덤 이미지를 처리하는데 있어 번거로움이 발생한다.
+        작성일: 2023.12.19
+        작성자: yujin
+        '''
+
+        if nickname is None:
+            nickname = generate_random_nickname()
+
+        if profile_url is None:
+            profile_url = f'https://api.dicebear.com/7.x/pixel-art/svg?seed=${phone}'
+
+        user = User.objects.create(phone=phone, nickname=nickname, profile_url=profile_url)
+        user.save()
+
+        return JsonResponse({
+            "status": "success",
+            "phone": phone,
+            "nickname": nickname,
+            "profile_url": profile_url,
+            "message": "회원가입에 성공했습니다."
+        })
+
+    except json.JSONDecodeError:
+        return JsonResponse({
+            "status": "success",
+            "message": "회원가입에 실패했습니다."
+        }, status=400)
 
 @csrf_exempt
 @require_http_methods(["POST"])
@@ -92,7 +140,6 @@ def check_auth_code(req):
 
     auth_code = cache.get(phone)
     print('phone, auth_code, code >> ', phone, auth_code, code)
-
 
 
     if auth_code is not None:

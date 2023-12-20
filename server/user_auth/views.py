@@ -30,6 +30,84 @@ from .decorators import token_required
 
 
 
+import boto3
+
+
+def upload_file(file, file_name):
+    s3 = boto3.client(
+        's3',
+        aws_access_key_id=settings.AWS_S3_ACCESS_KEY_ID,
+        aws_secret_access_key=settings.AWS_S3_SECRET_ACCESS_KEY,
+        region_name=settings.AWS_S3_REGION_NAME
+    )
+
+    try:
+        s3.upload_fileobj(
+            file,
+            settings.AWS_S3_STORAGE_BUCKET_NAME,
+            file_name,
+            ExtraArgs={'ACL': 'public-read', 'ContentType': file.content_type}
+        )
+
+        file_url = f'https://{settings.AWS_S3_STORAGE_BUCKET_NAME}.s3.{settings.AWS_S3_REGION_NAME}.amazonaws.com/{file_name}'
+        return file_url
+    except Exception as e:
+        print("Something Happened: ", e)
+        return None
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def update_profile_image(req):
+    user_id = req.POST.get('user_id')
+    image_file = req.FILES.get('image')
+
+    try:
+        user = User.objects.get(id=user_id)
+        file_name = f'profile_images/{user_id}'
+        file_url = upload_file(image_file, file_name)
+
+        if file_url:
+            user.profile_url = file_url
+            user.save()
+            return JsonResponse({'status': 'success', 'message': '프로필 이미지가 변경되었습니다.'})
+        else:
+            return JsonResponse({'status': 'error', 'message': '이미지 업로드 실패'}, status=500)
+    except User.DoesNotExist:
+        return JsonResponse({'status': 'error', 'message': '사용자가 존재하지 않습니다.'}, status=404)
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def update_nickname(request, user_id):
+    new_nickname = json.loads(request.body).get('new_nickname')
+
+    try:
+        user = User.objects.get(id=user_id)
+        user.nickname = new_nickname
+        user.save()
+        return JsonResponse({'status': 'success', 'message': '닉네임이 변경되었습니다.'})
+    except User.DoesNotExist:
+        return JsonResponse({'status': 'error', 'message': '사용자가 존재하지 않습니다.'}, status=404)
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def update_password(req):
+    data = json.loads(req.body)
+    current_password = data.get('current_password')
+    new_password = data.get('new_password')
+
+    try:
+        user = User.objects.get(id=user_id)
+        if check_password(current_password, user.password):
+            user.password = make_password(new_password)
+            user.save()
+            return JsonResponse({'status': 'success', 'message': '비밀번호가 변경되었습니다.'})
+        else:
+            return JsonResponse({'status': 'fail', 'message': '현재 비밀번호가 일치하지 않습니다.'}, status=401)
+    except User.DoesNotExist:
+        return JsonResponse({'status': 'error', 'message': '사용자가 존재하지 않습니다.'}, status=404)
+
+
+
 @csrf_exempt
 @require_http_methods(["POST"])
 def login(req):

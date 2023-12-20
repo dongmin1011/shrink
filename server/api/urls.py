@@ -8,6 +8,8 @@ urlpatterns = [
     path("auth/code", views.send_auth_code),
     path("auth/code/check", views.check_auth_code),
     path("auth/register", views.register),
+    path("auth/login", views.login),
+
 
     # path("redis-test", views.set_value),
     # path("redis-test/<str:key>", views.get_value),

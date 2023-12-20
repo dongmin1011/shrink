@@ -19,6 +19,13 @@ from dotenv import load_dotenv
 from .utils.user_utils import generate_random_nickname
 from .models import User
 
+
+import jwt
+import datetime
+from django.conf import settings
+from django.contrib.auth import authenticate, login
+
+
 NCP_ACCESS_KEY = os.getenv('NCP_ACCESS_KEY')
 NCP_SECRET_KEY = os.getenv('NCP_SECRET_KEY')
 NCP_SENS_SERVICE_ID = os.getenv('NCP_SENS_SERVICE_ID')
@@ -30,20 +37,59 @@ def index(req):
 
 @csrf_exempt
 @require_http_methods(["POST"])
+def login(req):
+    data = json.loads(req.body)
+
+    phone = data.get('phone')
+    password = data.get('password')
+
+    print('phone, password >> ', phone, password)
+    user = authenticate(req, username=phone, password=password)
+
+    print('user >> ', user)
+
+    if user is not None:
+        # login(req, user)
+        exp = datetime.datetime.utcnow() + datetime.timedelta(hours=24)
+        payload = {
+            'user_id': user.id,
+            'exp': exp
+        }
+        token = jwt.encode(payload, settings.SECRET_KEY, algorithm='HS256')
+
+        return JsonResponse({
+            'status': 'success',
+            'message': '로그인 성공',
+            'token': token
+        }, status=200)
+    else:
+        return JsonResponse({
+            'status': 'success',
+            'message': '로그인 실패',
+        }, status=401)
+
+
+
+
+
+@csrf_exempt
+@require_http_methods(["POST"])
 def register(req):
     try:
         data = json.loads(req.body)
-        phone = data.get('phone')
-        nickname = None
-        profile_url = None
 
         '''
-        설명: nickname, profile_url은 초기 회원가입시 입력받지 않고 랜덤으로 지정해주기 때문에 주석으로 처리한다.
+        설명: nickname, profile_url은 초기 회원가입시 입력받지 않고 랜덤으로 지정해주기 때문에 None으로 초기화한다.
         작성일: 2023.12.19
         작성자: yujin
         '''
-        # nickname = data.get('nickname')
-        # profile_url = data.get('profile_url')
+        phone = data.get('phone')
+        password = data.get('password')
+        nickname = None
+        profile_url = None
+
+        if nickname is None:
+            nickname = generate_random_nickname()
 
         '''
         설명: 프로필 이미지를 랜덤으로 생성하는 dicebear api를 사용한다.
@@ -52,15 +98,22 @@ def register(req):
         작성일: 2023.12.19
         작성자: yujin
         '''
-
-        if nickname is None:
-            nickname = generate_random_nickname()
-
         if profile_url is None:
             profile_url = f'https://api.dicebear.com/7.x/pixel-art/svg?seed=${phone}'
 
-        user = User.objects.create(phone=phone, nickname=nickname, profile_url=profile_url)
+        user = User(
+            # phone=phone,
+            username=phone,
+            password=password,
+            nickname=nickname,
+            profile_url=profile_url
+        )
+
         user.save()
+
+        user = User.objects.get(username=phone)
+        print('user.password >> ', user.password)
+
 
         return JsonResponse({
             "status": "success",

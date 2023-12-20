@@ -6,7 +6,6 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = "django-insecure-v20wnaxwb-e)wqt%u1gq_(us599zaap*+txx-*kp-l=(+8il$0"
@@ -15,7 +14,6 @@ SECRET_KEY = "django-insecure-v20wnaxwb-e)wqt%u1gq_(us599zaap*+txx-*kp-l=(+8il$0
 DEBUG = True
 
 ALLOWED_HOSTS = []
-
 INSTALLED_APPS = [
     "django.contrib.admin",
     "django.contrib.auth",

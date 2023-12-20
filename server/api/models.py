@@ -1,10 +1,12 @@
 from django.db import models
+from django.contrib.auth.hashers import make_password
 from django.utils import timezone
 import uuid
-
 class User(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    phone = models.CharField(max_length=15, unique=True)
+    # phone = models.CharField(max_length=15, unique=True)
+    username = models.CharField(max_length=15, unique=True) # phone
+    password = models.CharField(max_length=128)
     nickname = models.CharField(max_length=50)
     profile_url = models.URLField(max_length=200, blank=True)
     created_at = models.DateTimeField(default=timezone.now)
@@ -14,3 +16,7 @@ class User(models.Model):
 
     def __str__(self):
         return self.nickname
+
+    def save(self, *args, **kwargs):
+        self.password = make_password(self.password)
+        super().save(*args, **kwargs)

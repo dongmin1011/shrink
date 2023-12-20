@@ -25,6 +25,10 @@ import datetime
 from django.conf import settings
 from django.contrib.auth import authenticate, login
 
+from django.contrib.auth.hashers import make_password, check_password
+
+from .decorators import token_required
+
 
 NCP_ACCESS_KEY = os.getenv('NCP_ACCESS_KEY')
 NCP_SECRET_KEY = os.getenv('NCP_SECRET_KEY')
@@ -37,39 +41,57 @@ def index(req):
 
 @csrf_exempt
 @require_http_methods(["POST"])
+@token_required
+def write_report(req):
+    data = json.loads(req.body)
+    product = data.get('product')
+    content = data.get('content')
+
+    print('product, content >> ', product, content)
+    print('req user >> ', req.user)
+    print('req user >> ', req.user.id)
+
+    return JsonResponse({
+        "status": "success",
+        "message": "신고가 접수되었습니다."
+    })
+@csrf_exempt
+@require_http_methods(["POST"])
 def login(req):
     data = json.loads(req.body)
-
     phone = data.get('phone')
     password = data.get('password')
 
-    print('phone, password >> ', phone, password)
-    user = authenticate(req, username=phone, password=password)
+    try:
+        user = User.objects.get(phone=phone)
+        if check_password(password, user.password):
 
-    print('user >> ', user)
+            exp = datetime.datetime.utcnow() + datetime.timedelta(days=1)
+            payload = {
+                'user_id': str(user.id),
+                'exp': exp
+            }
+            token = jwt.encode(payload, settings.SECRET_KEY, algorithm='HS256')
 
-    if user is not None:
-        # login(req, user)
-        exp = datetime.datetime.utcnow() + datetime.timedelta(hours=24)
-        payload = {
-            'user_id': user.id,
-            'exp': exp
-        }
-        token = jwt.encode(payload, settings.SECRET_KEY, algorithm='HS256')
-
+            return JsonResponse({
+                'status': 'success',
+                'message': '로그인에 성공했습니다.',
+                'user' : {
+                    'nickname': user.nickname,
+                    'profile_url': user.profile_url,
+                },
+                'token': token
+            }, status=200)
+        else:
+            return JsonResponse({
+                'status': 'fail',
+                'message': '비밀번호가 일치하지 않습니다.'
+            }, status=401)
+    except User.DoesNotExist:
         return JsonResponse({
-            'status': 'success',
-            'message': '로그인 성공',
-            'token': token
-        }, status=200)
-    else:
-        return JsonResponse({
-            'status': 'success',
-            'message': '로그인 실패',
+            'status': 'fail',
+            'message': '사용자가 존재하지 않습니다.'
         }, status=401)
-
-
-
 
 
 @csrf_exempt
@@ -101,18 +123,20 @@ def register(req):
         if profile_url is None:
             profile_url = f'https://api.dicebear.com/7.x/pixel-art/svg?seed=${phone}'
 
+        hashed_password = make_password(password)
+
         user = User(
-            # phone=phone,
-            username=phone,
-            password=password,
+            phone=phone,
+            password=hashed_password,
             nickname=nickname,
             profile_url=profile_url
         )
 
         user.save()
 
-        user = User.objects.get(username=phone)
+        user = User.objects.get(phone=phone)
         print('user.password >> ', user.password)
+
 
 
         return JsonResponse({

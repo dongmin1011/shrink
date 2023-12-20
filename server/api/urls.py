@@ -10,6 +10,7 @@ urlpatterns = [
     path("auth/register", views.register),
     path("auth/login", views.login),
 
+    path('report', views.write_report),
 
     # path("redis-test", views.set_value),
     # path("redis-test/<str:key>", views.get_value),

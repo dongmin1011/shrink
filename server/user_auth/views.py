@@ -35,26 +35,8 @@ NCP_SECRET_KEY = os.getenv('NCP_SECRET_KEY')
 NCP_SENS_SERVICE_ID = os.getenv('NCP_SENS_SERVICE_ID')
 NCP_SENS_SEND_PHONE_NO = os.getenv('NCP_SENS_SEND_PHONE_NO')
 
-def index(req):
-    if req.method == "GET":
-        return JsonResponse({'response': True})
 
-@csrf_exempt
-@require_http_methods(["POST"])
-@token_required
-def write_report(req):
-    data = json.loads(req.body)
-    product = data.get('product')
-    content = data.get('content')
 
-    print('product, content >> ', product, content)
-    print('req user >> ', req.user)
-    print('req user >> ', req.user.id)
-
-    return JsonResponse({
-        "status": "success",
-        "message": "신고가 접수되었습니다."
-    })
 @csrf_exempt
 @require_http_methods(["POST"])
 def login(req):
@@ -240,36 +222,4 @@ def check_auth_code(req):
                 "phone": phone,
                 "message": "인증번호가 존재하지 않습니다."
         }, status=404)
-
-@csrf_exempt
-@require_http_methods(["POST"])
-def set_value(req):
-    try:
-        data = json.loads(req.body)
-        key = data.get('key')
-        value = data.get('value')
-
-        cache.set(key, value, timeout = 10)
-
-        return JsonResponse({
-            "status": "success",
-            "key": key,
-            "value": value
-        })
-
-    except json.JSONDecodeError:
-        return JsonResponse({"error": "Invalid JSON"}, status=400)
-
-@require_http_methods(["GET"])
-def get_value(req, key):
-    value = cache.get(key)
-
-    if value is not None:
-        return JsonResponse({
-            "status": "success",
-            "key": key,
-            "value": value
-        })
-    else:
-        return JsonResponse({"key": key, "value": value}, status=404)
 

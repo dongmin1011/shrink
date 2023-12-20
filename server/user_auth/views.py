@@ -8,7 +8,6 @@ import time
 import random
 from django.core.cache import cache
 
-
 from django.http import JsonResponse
 import os
 
@@ -28,12 +27,6 @@ from django.contrib.auth import authenticate, login
 from django.contrib.auth.hashers import make_password, check_password
 
 from .decorators import token_required
-
-
-NCP_ACCESS_KEY = os.getenv('NCP_ACCESS_KEY')
-NCP_SECRET_KEY = os.getenv('NCP_SECRET_KEY')
-NCP_SENS_SERVICE_ID = os.getenv('NCP_SENS_SERVICE_ID')
-NCP_SENS_SEND_PHONE_NO = os.getenv('NCP_SENS_SEND_PHONE_NO')
 
 
 
@@ -113,13 +106,7 @@ def register(req):
             nickname=nickname,
             profile_url=profile_url
         )
-
         user.save()
-
-        user = User.objects.get(phone=phone)
-        print('user.password >> ', user.password)
-
-
 
         return JsonResponse({
             "status": "success",
@@ -145,7 +132,7 @@ def send_auth_code(req):
     timestamp = str(timestamp)
 
     url = "https://sens.apigw.ntruss.com"
-    uri = f"/sms/v2/services/{NCP_SENS_SERVICE_ID}/messages"
+    uri = f"/sms/v2/services/{settings.NCP_SENS_SERVICE_ID}/messages"
 
     def generate_code():
         return str(random.randint(100000, 999999))
@@ -161,8 +148,14 @@ def send_auth_code(req):
     header = {
         "Content-Type": "application/json; charset=utf-8",
         "x-ncp-apigw-timestamp": timestamp,
-        "x-ncp-iam-access-key": NCP_ACCESS_KEY,
-        "x-ncp-apigw-signature-v2": generate_signature(NCP_SECRET_KEY, NCP_ACCESS_KEY, timestamp, url, uri)
+        "x-ncp-iam-access-key": settings.NCP_ACCESS_KEY,
+        "x-ncp-apigw-signature-v2": generate_signature(
+            settings.NCP_SECRET_KEY,
+            settings.NCP_ACCESS_KEY,
+            timestamp,
+            url,
+            uri
+        )
     }
 
     EXPIRE_SEC = 60 * 3
@@ -176,7 +169,7 @@ def send_auth_code(req):
         "type": "SMS",
         "contentType": "COMM",
         "countryCode": "82",
-        "from": NCP_SENS_SEND_PHONE_NO,
+        "from": settings.NCP_SENS_SEND_PHONE_NO,
         "content": content,
         "messages": [{"to": phone}],
     }

@@ -8,7 +8,4 @@ urlpatterns = [
     path("code/check", views.check_auth_code),
     path("register", views.register),
     path("login", views.login),
-
-
-
 ]

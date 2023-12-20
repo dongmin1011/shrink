@@ -11,6 +11,12 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = "django-insecure-v20wnaxwb-e)wqt%u1gq_(us599zaap*+txx-*kp-l=(+8il$0"
 
 
+NCP_ACCESS_KEY = os.getenv('NCP_ACCESS_KEY')
+NCP_SECRET_KEY = os.getenv('NCP_SECRET_KEY')
+NCP_SENS_SERVICE_ID = os.getenv('NCP_SENS_SERVICE_ID')
+NCP_SENS_SEND_PHONE_NO = os.getenv('NCP_SENS_SEND_PHONE_NO')
+
+
 DEBUG = True
 
 ALLOWED_HOSTS = []

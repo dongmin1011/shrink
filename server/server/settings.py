@@ -32,6 +32,7 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "corsheaders",
+    # 'drf_yasg', # Swagger API 문서 생성 라이브러리(사용법 복잡해서 보류) 23.12.21 yujin
     "user_auth",
     "favorite",
     "product",

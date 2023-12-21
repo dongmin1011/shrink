@@ -25,6 +25,24 @@ from .models import User
 
 
 
+@csrf_exempt
+@require_http_methods(["DELETE"])
+@token_required
+def delete_user(req):
+    data = json.loads(req.body)
+    input_nickname = data.get('nickname')
+
+    try:
+        user = User.objects.get(phone=req.user.phone)
+        if user.nickname == input_nickname:
+            user.delete()
+            return JsonResponse({'status': 'success', 'message': '계정이 삭제되었습니다.'})
+        else:
+            return JsonResponse({'status': 'fail', 'message': '닉네임이 일치하지 않습니다.'}, status=400)
+    except User.DoesNotExist:
+        return JsonResponse({'status': 'fail', 'message': '사용자가 존재하지 않습니다.'}, status=404)
+
+
 def upload_file(file, file_name):
     s3 = boto3.client(
         's3',
@@ -115,7 +133,7 @@ def update_password(req):
 
 @csrf_exempt
 @require_http_methods(["POST"])
-def login(req):
+def login_user(req):
     data = json.loads(req.body)
     phone = data.get('phone')
     password = data.get('password')
@@ -154,7 +172,7 @@ def login(req):
 
 @csrf_exempt
 @require_http_methods(["POST"])
-def register(req):
+def register_user(req):
     try:
         data = json.loads(req.body)
 

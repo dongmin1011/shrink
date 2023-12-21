@@ -8,6 +8,7 @@ import hmac
 import json
 import time
 import jwt
+import re
 
 
 from django.contrib.auth.hashers import make_password, check_password
@@ -186,6 +187,28 @@ def register_user(req):
         nickname = None
         profile_url = None
 
+        auth_status = cache.get(phone)
+        if not auth_status:
+            return JsonResponse({
+                "status": "fail",
+                "message": "핸드폰 번호가 인증되지 않았습니다."
+            }, status=401)
+
+        if not re.match(r'^01[0-9]{8,9}$', phone):
+            return JsonResponse({
+                "status": "fail",
+                "message": "유효하지 않은 핸드폰 번호입니다."
+            }, status=400)
+
+        if (len(password) < 8 or
+                not re.search("[a-zA-Z]", password) or
+                not re.search("[0-9]", password) or
+                not re.search("[`~!@#$%^&*(),.<>/?\|}{'\";:_[\]-]", password)):
+            return JsonResponse({
+                "status": "fail",
+                "message": "비밀번호는 8자 이상이며, 알파벳, 숫자, 특수문자를 모두 포함해야 합니다."
+            }, status=400)
+
         if nickname is None:
             nickname = generate_random_nickname()
 
@@ -208,6 +231,8 @@ def register_user(req):
             profile_url=profile_url
         )
         user.save()
+
+        cache.delete(phone)
 
         return JsonResponse({
             "status": "success",
@@ -262,7 +287,7 @@ def send_auth_code(req):
     EXPIRE_SEC = 60 * 3
 
     auth_code = generate_code()
-    cache.set(phone, auth_code, timeout = EXPIRE_SEC)
+    cache.set(phone, auth_code, timeout=EXPIRE_SEC)
     content = f"줄었슈링크 인증번호는 {auth_code} 입니다."
     print('content >> ', content)
 
@@ -298,6 +323,10 @@ def check_auth_code(req):
     if auth_code is not None:
         if auth_code == code:
             cache.delete(phone)
+
+            # 인증 완료 후 10분 동안 가입할 수 있는 시간을 준다.
+            EXPIRE_SEC = 60 * 10
+            cache.set(phone, True, timeout=EXPIRE_SEC)
 
             return JsonResponse({
                 "status": "success",

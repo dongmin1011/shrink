@@ -13,7 +13,7 @@ class Alert(models.Model):
         작성일: 23.12.20
         작성자: yujin
     """
-    toUser = models.ForeignKey(User, related_name='notifications', on_delete=models.CASCADE)
+    toUser = models.ForeignKey(User, related_name='alerts', on_delete=models.CASCADE)
     verb = models.CharField(max_length=255, blank=True, null=True)
     target = models.CharField(max_length=255, blank=True, null=True)
     content = models.CharField(max_length=512, blank=True, null=True)

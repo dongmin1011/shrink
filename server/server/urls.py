@@ -9,6 +9,6 @@ urlpatterns = [
     path("api/report/", include("report.urls")),
     path("api/alert/", include("alert.urls")),
     path("api/auth/", include("user_auth.urls")),
-    path("admin/", admin.site.urls),
+    # path("admin/", admin.site.urls),
     path("test", views.index),
 ]

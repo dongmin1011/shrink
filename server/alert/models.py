@@ -1,7 +1,6 @@
 from django.db import models
-from user_auth.models import User  # user_auth 앱의 User 모델을 직접 import
-
-
+from user_auth.models import User
+from django.utils import timezone
 class Notification(models.Model):
     """
         설명:
@@ -22,10 +21,8 @@ class Notification(models.Model):
     created_at = models.DateTimeField(default=timezone.now)
     # created_at = models.DateTimeField(auto_now_add=True)
 
-    class Meta:
-        ordering = ['-timestamp']
 
     def __str__(self):
-        return f'Notification for {self.recipient.username}'
+        return self.content
 
 

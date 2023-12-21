@@ -1,7 +1,7 @@
 from django.db import models
 from user_auth.models import User
 from django.utils import timezone
-class Notification(models.Model):
+class Alert(models.Model):
     """
         설명:
             toUser (수신자): 알림을 받는 사용자를 식별합니다
@@ -21,6 +21,8 @@ class Notification(models.Model):
     created_at = models.DateTimeField(default=timezone.now)
     # created_at = models.DateTimeField(auto_now_add=True)
 
+    class Meta:
+        db_table = 'alert'
 
     def __str__(self):
         return self.content

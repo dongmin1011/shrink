@@ -1,36 +1,28 @@
-import base64
-import hashlib
-import hmac
-
+import datetime
 import requests
+import hashlib
+import random
+import base64
+import boto3
+import hmac
 import json
 import time
-import random
-from django.core.cache import cache
+import jwt
 
-from django.http import JsonResponse
-import os
 
-from django.views.decorators.csrf import csrf_exempt
+from django.contrib.auth.hashers import make_password, check_password
 from django.views.decorators.http import require_http_methods
-from dotenv import load_dotenv
+from django.views.decorators.csrf import csrf_exempt
+from django.http import JsonResponse, QueryDict
+from django.core.cache import cache
+from django.conf import settings
+
 
 from .utils.user_utils import generate_random_nickname
+from .decorators import token_required
 from .models import User
 
 
-import jwt
-import datetime
-from django.conf import settings
-from django.contrib.auth import authenticate, login
-
-from django.contrib.auth.hashers import make_password, check_password
-
-from .decorators import token_required
-
-
-
-import boto3
 
 
 def upload_file(file, file_name):
@@ -46,57 +38,70 @@ def upload_file(file, file_name):
             file,
             settings.AWS_S3_STORAGE_BUCKET_NAME,
             file_name,
-            ExtraArgs={'ACL': 'public-read', 'ContentType': file.content_type}
+            ExtraArgs={'ContentType': file.content_type}
         )
 
         file_url = f'https://{settings.AWS_S3_STORAGE_BUCKET_NAME}.s3.{settings.AWS_S3_REGION_NAME}.amazonaws.com/{file_name}'
         return file_url
     except Exception as e:
-        print("Something Happened: ", e)
+        print("error >> ", e)
         return None
 
 @csrf_exempt
-@require_http_methods(["POST"])
+@require_http_methods(["PATCH"])
+@token_required
 def update_profile_image(req):
-    user_id = req.POST.get('user_id')
-    image_file = req.FILES.get('image')
+    """
+        설명: 장고는 기본적으로 POST 요청에 대해서만 multipart/form-data를 처리하고, PATCH나 PUT 요청에서는 이를 처리하지     않기 때문에 개발자가 요청의 body 내용을 수동으로 파싱해야 합니다.
+        작성일: 23.12.21
+        작성자: yujin
+    """
+    files = None
+    if req.content_type == 'multipart/form-data':
+        _, files = req.parse_file_upload(req.META, req)
+
+    image_file = files.get('image')
 
     try:
-        user = User.objects.get(id=user_id)
-        file_name = f'profile_images/{user_id}'
-        file_url = upload_file(image_file, file_name)
+        user = User.objects.get(phone=req.user.phone)
 
-        if file_url:
-            user.profile_url = file_url
+        file_name = f'profile_images/{user.id}'
+        upload_url = upload_file(image_file, file_name)
+
+        if upload_url:
+            user.profile_url = upload_url
             user.save()
             return JsonResponse({'status': 'success', 'message': '프로필 이미지가 변경되었습니다.'})
         else:
-            return JsonResponse({'status': 'error', 'message': '이미지 업로드 실패'}, status=500)
+            return JsonResponse({'status': 'fail', 'message': '이미지 업로드 실패'}, status=500)
     except User.DoesNotExist:
-        return JsonResponse({'status': 'error', 'message': '사용자가 존재하지 않습니다.'}, status=404)
+        return JsonResponse({'status': 'fail', 'message': '사용자가 존재하지 않습니다.'}, status=404)
 
 @csrf_exempt
-@require_http_methods(["POST"])
-def update_nickname(request, user_id):
-    new_nickname = json.loads(request.body).get('new_nickname')
+@require_http_methods(["PATCH"])
+@token_required
+def update_nickname(req):
+    data = json.loads(req.body)
+    new_nickname = data.get('new_nickname')
 
     try:
-        user = User.objects.get(id=user_id)
+        user = User.objects.get(phone=req.user.phone)
         user.nickname = new_nickname
         user.save()
         return JsonResponse({'status': 'success', 'message': '닉네임이 변경되었습니다.'})
     except User.DoesNotExist:
-        return JsonResponse({'status': 'error', 'message': '사용자가 존재하지 않습니다.'}, status=404)
+        return JsonResponse({'status': 'fail', 'message': '사용자가 존재하지 않습니다.'}, status=404)
 
 @csrf_exempt
-@require_http_methods(["POST"])
+@require_http_methods(["PATCH"])
+@token_required
 def update_password(req):
     data = json.loads(req.body)
     current_password = data.get('current_password')
     new_password = data.get('new_password')
 
     try:
-        user = User.objects.get(id=user_id)
+        user = User.objects.get(phone=req.user.phone)
         if check_password(current_password, user.password):
             user.password = make_password(new_password)
             user.save()
@@ -104,7 +109,7 @@ def update_password(req):
         else:
             return JsonResponse({'status': 'fail', 'message': '현재 비밀번호가 일치하지 않습니다.'}, status=401)
     except User.DoesNotExist:
-        return JsonResponse({'status': 'error', 'message': '사용자가 존재하지 않습니다.'}, status=404)
+        return JsonResponse({'status': 'fail', 'message': '사용자가 존재하지 않습니다.'}, status=404)
 
 
 
@@ -154,9 +159,9 @@ def register(req):
         data = json.loads(req.body)
 
         '''
-        설명: nickname, profile_url은 초기 회원가입시 입력받지 않고 랜덤으로 지정해주기 때문에 None으로 초기화한다.
-        작성일: 2023.12.19
-        작성자: yujin
+            설명: nickname, profile_url은 초기 회원가입시 입력받지 않고 랜덤으로 지정해주기 때문에 None으로 초기화한다.
+            작성일: 2023.12.19
+            작성자: yujin
         '''
         phone = data.get('phone')
         password = data.get('password')
@@ -167,11 +172,11 @@ def register(req):
             nickname = generate_random_nickname()
 
         '''
-        설명: 프로필 이미지를 랜덤으로 생성하는 dicebear api를 사용한다.
-            랜덤 프로필 이미지를 서버에서 구현하면 클라이언트는 편하겠지만, 
-            추후 랜덤 이미지를 변경하고자 할 때 서버에 이미 적용된 랜덤 이미지를 처리하는데 있어 번거로움이 발생한다.
-        작성일: 2023.12.19
-        작성자: yujin
+            설명: 프로필 이미지를 랜덤으로 생성하는 dicebear api를 사용한다.
+                랜덤 프로필 이미지를 서버에서 구현하면 클라이언트는 편하겠지만, 
+                추후 랜덤 이미지를 변경하고자 할 때 서버에 이미 적용된 랜덤 이미지를 처리하는데 있어 번거로움이 발생한다.
+            작성일: 2023.12.19
+            작성자: yujin
         '''
         if profile_url is None:
             profile_url = f'https://api.dicebear.com/7.x/pixel-art/svg?seed=${phone}'
@@ -240,7 +245,7 @@ def send_auth_code(req):
 
     auth_code = generate_code()
     cache.set(phone, auth_code, timeout = EXPIRE_SEC)
-    content = f"ai-market 인증번호는 {auth_code} 입니다."
+    content = f"줄었슈링크 인증번호는 {auth_code} 입니다."
     print('content >> ', content)
 
     payload = {

@@ -23,7 +23,8 @@ AWS_S3_REGION_NAME = os.getenv('AWS_S3_REGION_NAME')
 
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '').split(',')
+
 INSTALLED_APPS = [
     "django.contrib.admin",
     "django.contrib.auth",

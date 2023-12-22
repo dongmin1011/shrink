@@ -66,6 +66,7 @@ def select (req):
         good_id = item.find('goodId').text
         good_name = item.find('goodName').text
         key = good_name.split('(')[0]
+        key = key.replace(' ','')
         detail_mean = item.find('detailMean').text if item.find('detailMean') is not None else None
         good_total_cnt = item.find('goodTotalCnt').text if item.find('goodTotalCnt') is not None else None
         result[key] = {'id': good_id, 'name':good_name, 'mean': detail_mean, 'cnt':good_total_cnt}

@@ -40,6 +40,7 @@ def delete_user(req):
             return JsonResponse({'status': 'success', 'message': '계정이 삭제되었습니다.'})
         else:
             return JsonResponse({'status': 'fail', 'message': '닉네임이 일치하지 않습니다.'}, status=400)
+
     except User.DoesNotExist:
         return JsonResponse({'status': 'fail', 'message': '사용자가 존재하지 않습니다.'}, status=404)
 

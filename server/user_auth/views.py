@@ -254,6 +254,12 @@ def send_auth_code(req):
     data = json.loads(req.body)
     phone = data.get('phone')
 
+    if not re.match(r'^01[0-9]{8,9}$', phone):
+        return JsonResponse({
+            "status": "fail",
+            "message": "유효하지 않은 핸드폰 번호입니다."
+        }, status=400)
+
     timestamp = int(time.time() * 1000)
     timestamp = str(timestamp)
 

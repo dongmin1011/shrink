@@ -8,6 +8,7 @@ from user_auth.decorators import token_required
 from .models import Report
 from django.utils import timezone
 
+
 @csrf_exempt
 @require_http_methods(["POST"])
 @token_required

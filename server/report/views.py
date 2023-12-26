@@ -70,7 +70,7 @@ def select(req):
     data = json.loads(req.body)
     product = data.get('product')
     
-    desired_product_reports = Report.objects.filter(product_name=product).values( )
+    desired_product_reports = Report.objects.filter(product_name__icontains=product).values( )
     for report in desired_product_reports:
         status_display = dict(Report.STATUS_CHOICES).get(report['status'])
         # print("123", status_display)

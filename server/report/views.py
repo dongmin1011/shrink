@@ -17,25 +17,29 @@ def write_report(req):
     product = data.get('product')
     weight = data.get('weight')
     price = int(data.get('price'))
-
+    content = data.get('content')
+    
+    
     print('product, weight >> ', product, weight)
     print('req user >> ', req.user)
     print('req user >> ', req.user.id)
     
-    existing_user = req.user
-    if existing_user.is_anonymous:
-        return JsonResponse({
-            'status': 'fail',
-            'message':'사용자 정보 없음'
-        })
+    # existing_user = req.user
+    # if existing_user.is_anonymous:
+    #     return JsonResponse({
+    #         'status': 'fail',
+    #         'message':'사용자 정보 없음'
+    #     })
     
-    # existing_user = User.objects.get(phone='01066594660')
+    existing_user = User.objects.get(phone='01066594660')
     report = Report.objects.create(
         user=existing_user,  # 위에서 가져온 기존 User 객체를 연결합니다
         created_at=timezone.now(),
         price=price,
         product_name=product,
-        weight = weight
+        weight = weight,
+        content = content,
+        status = 1,
         
     )
     return JsonResponse({
@@ -46,8 +50,11 @@ def write_report(req):
 ## 신고된 제품 전체 출력
 def selectALL(req):
     # Report 모델의 모든 객체 조회
-    all_reports = Report.objects.all().values('product_name', 'weight', 'price', 'created_at')
-    
+    all_reports = Report.objects.all().values()
+    for report in all_reports:
+        status_display = dict(Report.STATUS_CHOICES).get(report['status'])
+        # print("123", status_display)
+        report['status'] = status_display
 
     all_reports = list(all_reports)
     print(all_reports)
@@ -63,7 +70,11 @@ def select(req):
     data = json.loads(req.body)
     product = data.get('product')
     
-    desired_product_reports = Report.objects.filter(product_name=product).values( 'product_name', 'weight', 'price', 'created_at')
+    desired_product_reports = Report.objects.filter(product_name=product).values( )
+    for report in desired_product_reports:
+        status_display = dict(Report.STATUS_CHOICES).get(report['status'])
+        # print("123", status_display)
+        report['status'] = status_display
     reports_list = list(desired_product_reports)  # QuerySet을 리스트로 변환
     if reports_list:
         return JsonResponse({'status':'success', "response":reports_list})
@@ -84,7 +95,11 @@ def selectUser(req):
             'status': 'fail',
             'message':'사용자 정보 없음'
         })
-    desired_product_reports = Report.objects.filter(user=existing_user).values('user', 'product_name', 'weight', 'price', 'created_at')
+    desired_product_reports = Report.objects.filter(user=existing_user).values()
+    for report in desired_product_reports:
+        status_display = dict(Report.STATUS_CHOICES).get(report['status'])
+        # print("123", status_display)
+        report['status'] = status_display
     reports_list = list(desired_product_reports)  # QuerySet을 리스트로 변환
     if reports_list:
         return JsonResponse({'status':'success', "response":reports_list})

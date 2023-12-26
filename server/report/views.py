@@ -24,14 +24,14 @@ def write_report(req):
     print('req user >> ', req.user)
     print('req user >> ', req.user.id)
     
-    # existing_user = req.user
-    # if existing_user.is_anonymous:
-    #     return JsonResponse({
-    #         'status': 'fail',
-    #         'message':'사용자 정보 없음'
-    #     })
+    existing_user = req.user
+    if existing_user.is_anonymous:
+        return JsonResponse({
+            'status': 'fail',
+            'message':'사용자 정보 없음'
+        })
     
-    existing_user = User.objects.get(phone='01066594660')
+    # existing_user = User.objects.get(phone='01066594660')
     report = Report.objects.create(
         user=existing_user,  # 위에서 가져온 기존 User 객체를 연결합니다
         created_at=timezone.now(),
@@ -89,7 +89,6 @@ def selectUser(req):
     
     try:
         existing_user = req.user
-        # existing_user = User.objects.get(phone='01066594660')
     except:
         return JsonResponse({
             'status': 'fail',

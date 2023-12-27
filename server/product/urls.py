@@ -5,5 +5,6 @@ from product import views
 
 urlpatterns = [
     path('', views.index),
-    path('/select', views.select),
+    path('select', views.select),
+    path('analysis', views.analysis),
 ]

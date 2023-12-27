@@ -13,11 +13,11 @@ import requests
 import os
 from dotenv import load_dotenv
 
-# from ultralytics import YOLO
+from ultralytics import YOLO
 
 
 load_dotenv()
-# model = YOLO("yolov8n.pt")  # load a pretrained model (recommended for training)
+model = YOLO("yolov8n.pt")  # load a pretrained model (recommended for training)
 
 def index(req):
     if req.method == "GET":
@@ -137,52 +137,52 @@ def select (req):
 
     return JsonResponse(productResult)
 
-# @csrf_exempt
-# # @require_http_methods(["POST"])
-# def analysis(req):
-#     print(req)
-#     if req.method =='POST' and req.FILES['image']:
-#         # images = req.FILES.getlist('image')
-#         # for image in images:
-#         #     # img = cv2.imread(image.path, cv2.IMREAD_GRAYSCALE)
-#         #     print(image)
-#         # for key in req.FILES:
-#         #     print(req.FILES[key])
-#         #     file = req.FILES[key]
+@csrf_exempt
+# @require_http_methods(["POST"])
+def analysis(req):
+    print(req)
+    if req.method =='POST' and req.FILES['image']:
+        # images = req.FILES.getlist('image')
+        # for image in images:
+        #     # img = cv2.imread(image.path, cv2.IMREAD_GRAYSCALE)
+        #     print(image)
+        # for key in req.FILES:
+        #     print(req.FILES[key])
+        #     file = req.FILES[key]
 
-#         #     fs = FileSystemStorage()
-#         #     if not os.path.exists('file'):
-#         #         os.makedirs('file')
-#         #     filename = fs.save('file/'+file.name, file)
-#         #     file_url = fs.url(filename)
-#         #     file_url = '.'+file_url
-#         image = req.FILES['image']
-#         fs = FileSystemStorage()
-#         if not os.path.exists('file'):
-#             os.makedirs('file')
-#         filename = fs.save('file/'+image.name, image)
-#         file_url = fs.url(filename)
-#         file_url = '.'+file_url
+        #     fs = FileSystemStorage()
+        #     if not os.path.exists('file'):
+        #         os.makedirs('file')
+        #     filename = fs.save('file/'+file.name, file)
+        #     file_url = fs.url(filename)
+        #     file_url = '.'+file_url
+        image = req.FILES['image']
+        fs = FileSystemStorage()
+        if not os.path.exists('file'):
+            os.makedirs('file')
+        filename = fs.save('file/'+image.name, image)
+        file_url = fs.url(filename)
+        file_url = '.'+file_url
         
-#         # model = YOLO("yolov8n.yaml")  # build a new model from scratch
-#         # model.train(data="coco128.yaml", epochs=3)
-#         results = model.predict(file_url)
-#         res_plotted = results[0].plot()
-#         # image_b64 = base64.b64encode(res_plotted).decode()
-#         # print(image_b64)
-#         # print(res_plotted)
+        # model = YOLO("yolov8n.yaml")  # build a new model from scratch
+        # model.train(data="coco128.yaml", epochs=3)
+        results = model.predict(file_url)
+        res_plotted = results[0].plot()
+        # image_b64 = base64.b64encode(res_plotted).decode()
+        # print(image_b64)
+        # print(res_plotted)
 
-#         # 이미지 창에 출력
-#         # cv2.imshow('Image', res_plotted)
-#         # cv2.waitKey(0)
-#         image_data = np.array(res_plotted, dtype=np.uint8)
-#         # image = cv2.cvtColor(image_data, cv2.COLOR_RGB2BGR)  # 이미지 생성 (BGR 형식으로)
+        # 이미지 창에 출력
+        # cv2.imshow('Image', res_plotted)
+        # cv2.waitKey(0)
+        image_data = np.array(res_plotted, dtype=np.uint8)
+        # image = cv2.cvtColor(image_data, cv2.COLOR_RGB2BGR)  # 이미지 생성 (BGR 형식으로)
 
-#         retval, buffer = cv2.imencode('.png', image_data)
-#         image_base64 = base64.b64encode(buffer).decode('utf-8')
+        retval, buffer = cv2.imencode('.png', image_data)
+        image_base64 = base64.b64encode(buffer).decode('utf-8')
 
         
 
-#         return JsonResponse({'response':image_base64})
+        return JsonResponse({'response':image_base64})
         
-#     return JsonResponse({'response':True})
+    return JsonResponse({'response':True})

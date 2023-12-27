@@ -55,10 +55,10 @@ MIDDLEWARE = [
 ]
 
 
-CORS_ALLOW_CREDENTIALS = True  # True 상태면 HTTP 상태에서도 쿠키를 요청에 포함할 수 있다.
+CORS_ALLOW_CREDENTIALS = True  # True 상태면 HTTP 상태에서도 쿠키를 요청에 포함
 
-CORS_ORIGIN_ALLOW_ALL = False
-CSRF_TRUSTED_ORIGINS = (
+CORS_ORIGIN_ALLOW_ALL = True  # 모든 도메인에 대해 허용
+CORS_ORIGIN_WHITELIST = (
     'http://localhost:3000',
     'http://127.0.0.1:3000',
     'https://localhost:3000',
@@ -66,7 +66,7 @@ CSRF_TRUSTED_ORIGINS = (
     'https://www.dietshrink.site',
 )
 
-CORS_ORIGIN_WHITELIST = (
+CSRF_TRUSTED_ORIGINS = (
     'http://localhost:3000',
     'http://127.0.0.1:3000',
     'https://localhost:3000',

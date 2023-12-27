@@ -3,6 +3,7 @@ from pathlib import Path
 
 import os
 from dotenv import load_dotenv
+from ultralytics import YOLO
 
 load_dotenv()
 
@@ -151,3 +152,5 @@ USE_TZ = True
 STATIC_URL = "static/"
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+

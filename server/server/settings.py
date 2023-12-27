@@ -3,7 +3,7 @@ from pathlib import Path
 
 import os
 from dotenv import load_dotenv
-from ultralytics import YOLO
+
 
 load_dotenv()
 

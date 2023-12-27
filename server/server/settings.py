@@ -44,6 +44,7 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware'
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -51,13 +52,12 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
-    'corsheaders.middleware.CorsMiddleware'
 ]
 
-# CORS_ORIGIN_ALLOW_ALL = True
 
-# CORS_ALLOW_CREDENTIALS = True
+CORS_ALLOW_CREDENTIALS = True  # True 상태면 HTTP 상태에서도 쿠키를 요청에 포함할 수 있다.
 
+CORS_ORIGIN_ALLOW_ALL = False
 CSRF_TRUSTED_ORIGINS = (
     'http://localhost:3000',
     'http://127.0.0.1:3000',

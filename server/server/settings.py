@@ -38,6 +38,7 @@ INSTALLED_APPS = [
     "favorite",
     "product",
     "report",
+    'query',
     "alert",
 ]
 

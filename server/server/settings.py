@@ -148,7 +148,8 @@ TIME_ZONE = "Asia/Seoul"
 
 USE_I18N = True
 
-USE_TZ = True
+# Local 서버 시간을 사용해 DB에 저장하기 위해 False로 변경(한국시간) 23.12.27 yujin
+USE_TZ = False
 
 STATIC_URL = "static/"
 

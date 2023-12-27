@@ -33,7 +33,7 @@ def list_queryboards(req):
     except Exception as e:
         return JsonResponse({
             'status': 'fail',
-            'message': '게시물 목록 조회 중 오류가 발생했습니다'
+            'message': '게시물 목록 조회 중 오류가 발생했습니다: ' + str(e)
         }, status=500)
 
 # 질문 게시물 조회
@@ -41,6 +41,7 @@ def list_queryboards(req):
 def detail_queryboard(req, query_id):
     queryboard = get_object_or_404(QueryBoard, id=query_id)
     comments = queryboard.comments.all()
+
     comment_data = [{
         'id': comment.id,
         'writer': {
@@ -48,7 +49,9 @@ def detail_queryboard(req, query_id):
             'profile_url': comment.writer.profile_url
         },
         'content': comment.content,
-        'created_at': comment.created_at
+        'created_at': comment.created_at,
+        'likes_count': comment.comment_likes.count(),
+        'dislikes_count': comment.comment_dislikes.count()
     } for comment in comments]
 
     payload = {
@@ -62,8 +65,8 @@ def detail_queryboard(req, query_id):
                 'nickname': queryboard.writer.nickname,
                 'profile_url': queryboard.writer.profile_url
             },
-            'like': queryboard.like,
-            'dislike': queryboard.dislike,
+            'like': queryboard.likes.count(),
+            'dislike': queryboard.dislikes.count(),
             'view': queryboard.view,
             'created_at': queryboard.created_at,
             'comments': comment_data
@@ -108,192 +111,324 @@ def create_queryboard(req):
             'message': f'{queryboard.id}번 게시물이 성공적으로 등록되었습니다.'
         })
     except Exception as e:
-        print(e)
-
         return JsonResponse({
             'status': 'fail',
-            'message': '게시물 등록 중 오류가 발생했습니다'
+            'message': '게시물 등록 중 오류가 발생했습니다: ' + str(e)
         }, status=500)
 
 
 # 질문 게시물 수정
 @require_http_methods(["PUT"])
+@csrf_exempt
+@token_required
 def update_queryboard(req, query_id):
-    queryboard = get_object_or_404(QueryBoard, id=query_id)
-    if queryboard.writer != req.user:
-        raise PermissionDenied
+    try:
+        queryboard = get_object_or_404(QueryBoard, id=query_id)
+        if queryboard.writer != req.user:
+            return JsonResponse({
+                'status': 'fail',
+                'message': '게시물 수정 권한이 없습니다.'
+            }, status=403)
 
-    data = json.loads(request.body)
-    queryboard.title = data.get('title', queryboard.title)
-    queryboard.content = data.get('content', queryboard.content)
-    queryboard.save()
+        data = json.loads(req.body)
+        queryboard.title = data.get('title', queryboard.title)
+        queryboard.content = data.get('content', queryboard.content)
+        queryboard.save()
 
-    return JsonResponse({
-        'status': 'success',
-        'message': f'{queryboard.id}번 게시물이 성공적으로 수정되었습니다.'
-    })
+        return JsonResponse({
+            'status': 'success',
+            'message': f'{queryboard.id}번 게시물이 성공적으로 수정되었습니다.'
+        })
+    except json.JSONDecodeError:
+        return JsonResponse({
+            'status': 'fail',
+            'message': '잘못된 형식의 데이터입니다.'
+        }, status=400)
+    except Exception as e:
+        return JsonResponse({
+            'status': 'fail',
+            'message': f'게시물 수정 중 오류가 발생했습니다: {str(e)}'
+        }, status=500)
 
 
 # 질문 게시물 삭제
 @require_http_methods(["DELETE"])
-def delete_queryboard(request, query_id):
-    queryboard = get_object_or_404(QueryBoard, id=query_id)
-    if queryboard.writer != request.user:
-        raise PermissionDenied
+@csrf_exempt
+@token_required
+def delete_queryboard(req, query_id):
+    try:
+        queryboard = get_object_or_404(QueryBoard, id=query_id)
+        if queryboard.writer != req.user:
+            return JsonResponse({
+                'status': 'fail',
+                'message': '게시물 삭제 권한이 없습니다.'
+            }, status=403)
 
-    queryboard.delete()
-    return JsonResponse({
-        'status': 'success',
-        'message': f'{queryboard.id}번 게시물이 성공적으로 삭제되었습니다.'
-    })
+        queryboard.delete()
+        return JsonResponse({
+            'status': 'success',
+            'message': f'{query_id}번 게시물이 성공적으로 삭제되었습니다.'
+        })
+    except QueryBoard.DoesNotExist:
+        return JsonResponse({
+            'status': 'fail',
+            'message': '해당 게시물을 찾을 수 없습니다.'
+        }, status=404)
+    except Exception as e:
+        return JsonResponse({
+            'status': 'fail',
+            'message': f'게시물 삭제 중 오류가 발생했습니다: {str(e)}'
+        }, status=500)
 
-
-# 질문 게시물 조회수 증가
+# 질문 게시물 조회수 추가
 @require_http_methods(["POST"])
+@csrf_exempt
 def increase_view_queryboard(req, query_id):
-    queryboard = get_object_or_404(QueryBoard, id=query_id)
-
-    queryboard.view += 1
-    queryboard.save()
-
-    return JsonResponse({
-        'status': 'success',
-        'message': f'{query_id}번 게시물의 조회수가 증가되었습니다.'
-    })
-
-
-# 질문 게시물 좋아요 처리
-@require_http_methods(["POST"])
-def like_queryboard(request, query_id):
-    queryboard = get_object_or_404(QueryBoard, id=query_id)
-    user = request.user
-
-    like, created = Like.objects.get_or_create(query=queryboard, user=user)
-    if not created:
-        like.delete()
+    try:
+        queryboard = get_object_or_404(QueryBoard, id=query_id)
+        queryboard.view += 1
+        queryboard.save()
         return JsonResponse({
             'status': 'success',
-            'message': f'{query_id}번 게시물의 좋아요가 제거되었습니다.'
+            'message': f'{query_id}번 게시물의 조회수가 추가되었습니다.'
         })
+    except QueryBoard.DoesNotExist:
+        return JsonResponse({
+            'status': 'fail',
+            'message': '해당 게시물을 찾을 수 없습니다.'
+        }, status=404)
+    except Exception as e:
+        return JsonResponse({
+            'status': 'fail',
+            'message': f'조회수 추가 중 오류가 발생했습니다: {str(e)}'
+        }, status=500)
 
-    return JsonResponse({
-        'status': 'success',
-        'message': f'{query_id}번 게시물의 좋아요가 증가되었습니다.'
-    })
 
-
-# 질문 게시물 싫어요 처리
+# 질문 게시물 좋아요
 @require_http_methods(["POST"])
-def dislike_queryboard(request, query_id):
-    queryboard = get_object_or_404(QueryBoard, id=query_id)
-    user = request.user
+@csrf_exempt
+@token_required
+def like_queryboard(req, query_id):
+    try:
+        queryboard = get_object_or_404(QueryBoard, id=query_id)
+        user = req.user
 
+        dislike = Dislike.objects.filter(query=queryboard, user=user).first()
+        if dislike:
+            dislike.delete()
 
-    dislike, created = Dislike.objects.get_or_create(query=queryboard, user=user)
-    if not created:
-        dislike.delete()
+        like, created = Like.objects.get_or_create(query=queryboard, user=user)
+        if not created:
+            like.delete()
+            return JsonResponse({
+                'status': 'success',
+                'message': f'{query_id}번 게시물의 좋아요가 제거되었습니다.'
+            })
         return JsonResponse({
             'status': 'success',
-            'message': f'{query_id}번 게시물의 싫어요가 제거되었습니다.'
+            'message': f'{query_id}번 게시물의 좋아요가 추가되었습니다.'
         })
+    except QueryBoard.DoesNotExist:
+        return JsonResponse({
+            'status': 'fail',
+            'message': '해당 게시물을 찾을 수 없습니다.'
+        }, status=404)
+    except Exception as e:
+        return JsonResponse({
+            'status': 'fail',
+            'message': f'좋아요 처리 중 오류가 발생했습니다: {str(e)}'
+        }, status=500)
 
-    return JsonResponse({
-        'status': 'success',
-        'message': f'{query_id}번 게시물의 싫어요가 증가되었습니다.'
-    })
 
-
-# 질문 게시물 댓글 작성
+# 질문 게시물 싫어요
 @require_http_methods(["POST"])
-def create_comment(request, query_id):
-    data = json.loads(request.body)
-    content = data.get('content')
-    user = request.user
-    queryboard = get_object_or_404(QueryBoard, id=query_id)
+@csrf_exempt
+@token_required
+def dislike_queryboard(req, query_id):
+    try:
+        queryboard = get_object_or_404(QueryBoard, id=query_id)
+        user = req.user
 
-    comment = Comment.objects.create(query=queryboard, user=user, content=content)
-    
-    return JsonResponse({
-        'status': 'success',
-        'message': f'{query_id}번 게시물에 댓글이 작성되었습니다.',
-        'comment_id': comment.id
-    })
+        like = Like.objects.filter(query=queryboard, user=user).first()
+        if like:
+            like.delete()
 
+        dislike, created = Dislike.objects.get_or_create(query=queryboard, user=user)
+        if not created:
+            dislike.delete()
+            return JsonResponse({
+                'status': 'success',
+                'message': f'{query_id}번 게시물의 싫어요가 제거되었습니다.'
+            })
+        return JsonResponse({
+            'status': 'success',
+            'message': f'{query_id}번 게시물의 싫어요가 추가되었습니다.'
+        })
+    except QueryBoard.DoesNotExist:
+        return JsonResponse({
+            'status': 'fail',
+            'message': '해당 게시물을 찾을 수 없습니다.'
+        }, status=404)
+    except Exception as e:
+        return JsonResponse({
+            'status': 'fail',
+            'message': f'싫어요 처리 중 오류가 발생했습니다: {str(e)}'
+        }, status=500)
+
+
+# 댓글 작성
+@require_http_methods(["POST"])
+@csrf_exempt
+@token_required
+def create_comment(req, query_id):
+    print('req.body >> ', query_id)
+    try:
+        data = json.loads(req.body)
+        content = data.get('content')
+        user = req.user
+        queryboard = get_object_or_404(QueryBoard, id=query_id)
+        comment = Comment.objects.create(query=queryboard, writer=user, content=content)
+        return JsonResponse({
+            'status': 'success',
+            'message': f'{query_id}번 게시물에 댓글이 작성되었습니다.',
+            'comment_id': comment.id
+        })
+    except QueryBoard.DoesNotExist:
+        return JsonResponse({
+            'status': 'fail',
+            'message': '해당 게시물을 찾을 수 없습니다.'
+        }, status=404)
+    except Exception as e:
+        return JsonResponse({
+            'status': 'fail',
+            'message': f'댓글 작성 중 오류가 발생했습니다: {str(e)}'
+        }, status=500)
 
 # 댓글 수정
 @require_http_methods(["PUT"])
-def update_comment(request, comment_id):
-    comment = get_object_or_404(Comment, id=comment_id)
-    if comment.user != request.user:
-        raise PermissionDenied
-
-    data = json.loads(request.body)
-    comment.content = data.get('content', comment.content)
-    comment.save()
-
-    return JsonResponse({
-        'status': 'success',
-        'message': f'{query_id}번 게시물에 댓글이 수정되었습니다.',
-        'comment_id': comment.id
-    })
-
+@csrf_exempt
+@token_required
+def update_comment(req, comment_id):
+    try:
+        comment = get_object_or_404(Comment, id=comment_id)
+        if comment.writer != req.user:
+            return JsonResponse({
+                'status': 'fail',
+                'message': '댓글 수정 권한이 없습니다.'
+            }, status=403)
+        data = json.loads(req.body)
+        comment.content = data.get('content', comment.content)
+        comment.save()
+        return JsonResponse({
+            'status': 'success',
+            'message': f'{comment_id}번 댓글이 수정되었습니다.',
+            'comment_id': comment.id
+        })
+    except Comment.DoesNotExist:
+        return JsonResponse({
+            'status': 'fail',
+            'message': '해당 댓글을 찾을 수 없습니다.'
+        }, status=404)
+    except Exception as e:
+        return JsonResponse({
+            'status': 'fail',
+            'message': f'댓글 수정 중 오류가 발생했습니다: {str(e)}'
+        }, status=500)
 
 # 댓글 삭제
 @require_http_methods(["DELETE"])
-def delete_comment(request, comment_id):
-    comment = get_object_or_404(Comment, id=comment_id)
-    if comment.user != request.user:
-        raise PermissionDenied
-
-    comment.delete()
-
-    return JsonResponse({
-        'status': 'success',
-        'message': f'{query_id}번 게시물에 댓글이 삭제되었습니다.',
-    })
-
+@csrf_exempt
+@token_required
+def delete_comment(req, comment_id):
+    try:
+        comment = get_object_or_404(Comment, id=comment_id)
+        if comment.writer != req.user:
+            return JsonResponse({
+                'status': 'fail',
+                'message': '댓글 삭제 권한이 없습니다.'
+            }, status=403)
+        comment.delete()
+        return JsonResponse({
+            'status': 'success',
+            'message': f'{comment_id}번 댓글이 삭제되었습니다.'
+        })
+    except Comment.DoesNotExist:
+        return JsonResponse({
+            'status': 'fail',
+            'message': '해당 댓글을 찾을 수 없습니다.'
+        }, status=404)
+    except Exception as e:
+        return JsonResponse({
+            'status': 'fail',
+            'message': f'댓글 삭제 중 오류가 발생했습니다: {str(e)}'
+        }, status=500)
 
 # 댓글 좋아요
 @require_http_methods(["POST"])
-def like_comment(request, comment_id):
-    comment = get_object_or_404(Comment, id=comment_id)
-    user = request.user
+@csrf_exempt
+@token_required
+def like_comment(req, comment_id):
+    try:
+        comment = get_object_or_404(Comment, id=comment_id)
+        user = req.user
 
-    comment_like, created = CommentLike.objects.get_or_create(comment=comment, user=user)
-    if not created:
-        comment_like.delete()
+        comment_dislike = CommentDislike.objects.filter(comment=comment, user=user).first()
+        if comment_dislike:
+            comment_dislike.delete()
 
+        comment_like, created = CommentLike.objects.get_or_create(comment=comment, user=user)
+        if not created:
+            comment_like.delete()
+            return JsonResponse({
+                'status': 'success',
+                'message': f'{comment_id}번 댓글의 좋아요가 제거되었습니다.'
+            })
         return JsonResponse({
             'status': 'success',
-            'message': f'{comment_id}번 댓글의 좋아요가 제거되었습니다.'
+            'message': f'{comment_id}번 댓글의 좋아요가 추가되었습니다.'
         })
-
-    return JsonResponse({
-        'status': 'success',
-        'message': f'{comment_id}번 댓글의 좋아요가 증가되었습니다.'
-    })
-
-
-
-
-
+    except Comment.DoesNotExist:
+        return JsonResponse({
+            'status': 'fail',
+            'message': '해당 댓글을 찾을 수 없습니다.'
+        }, status=404)
+    except Exception as e:
+        return JsonResponse({
+            'status': 'fail',
+            'message': f'댓글 좋아요 처리 중 오류가 발생했습니다: {str(e)}'
+        }, status=500)
 
 # 댓글 싫어요
 @require_http_methods(["POST"])
-def dislike_comment(request, comment_id):
-    comment = get_object_or_404(Comment, id=comment_id)
-    user = request.user
+@csrf_exempt
+@token_required
+def dislike_comment(req, comment_id):
+    try:
+        comment = get_object_or_404(Comment, id=comment_id)
+        user = req.user
 
-    comment_dislike, created = CommentDislike.objects.get_or_create(comment=comment, user=user)
-    if not created:
-        comment_dislike.delete()
-        
+        comment_like = CommentLike.objects.filter(comment=comment, user=user).first()
+        if comment_like:
+            comment_like.delete()
+
+        comment_dislike, created = CommentDislike.objects.get_or_create(comment=comment, user=user)
+        if not created:
+            comment_dislike.delete()
+            return JsonResponse({
+                'status': 'success',
+                'message': f'{comment_id}번 댓글의 싫어요가 제거되었습니다.'
+            })
         return JsonResponse({
             'status': 'success',
-            'message': f'{comment_id}번 댓글의 싫어요가 제거되었습니다.'
+            'message': f'{comment_id}번 댓글의 싫어요가 추가되었습니다.'
         })
-
-    return JsonResponse({
-        'status': 'success',
-        'message': f'{comment_id}번 댓글의 싫어요가 증가되었습니다.'
-    })
+    except Comment.DoesNotExist:
+        return JsonResponse({
+            'status': 'fail',
+            'message': '해당 댓글을 찾을 수 없습니다.'
+        }, status=404)
+    except Exception as e:
+        return JsonResponse({
+            'status': 'fail',
+            'message': f'댓글 싫어요 처리 중 오류가 발생했습니다: {str(e)}'
+        }, status=500)

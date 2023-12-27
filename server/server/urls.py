@@ -8,6 +8,7 @@ urlpatterns = [
     path("api/product/", include("product.urls")),
     path("api/report/", include("report.urls")),
     path("api/alert/", include("alert.urls")),
+    path("api/query/", include("query.urls")),
     path("api/auth/", include("user_auth.urls")),
     # path("admin/", admin.site.urls),
     path("test/", views.index),

@@ -1,13 +1,12 @@
-from django.http import JsonResponse, HttpResponse
-from django.views.decorators.csrf import csrf_exempt
-from django.views.decorators.http import require_http_methods
 from .models import QueryBoard, Like, Dislike, Comment, CommentLike, CommentDislike
-from django.shortcuts import get_object_or_404
+from django.views.decorators.http import require_http_methods
+from django.views.decorators.csrf import csrf_exempt
 from django.core.exceptions import PermissionDenied
+from django.http import JsonResponse, HttpResponse
 from user_auth.decorators import token_required
+from django.shortcuts import get_object_or_404
 
 import json
-
 
 
 # 질문 게시물 목록

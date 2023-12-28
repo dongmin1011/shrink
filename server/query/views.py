@@ -17,6 +17,7 @@ def list_queryboards(req):
         post_list = [{
             'id': query.id,
             'title': query.title,
+            'content': query.content,
             'writer': query.writer.nickname,
             'like': query.like,
             'dislike': query.dislike,

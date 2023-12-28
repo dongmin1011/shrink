@@ -1,9 +1,13 @@
 import base64
+from io import BytesIO
 import cv2
-from django.http import JsonResponse
+from django.http import HttpResponse, JsonResponse
+from django.shortcuts import get_object_or_404
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 from django.core.files.storage import FileSystemStorage
+from .models import ProductAnalysis
+from django.core.files import File
 
 
 from bs4 import BeautifulSoup
@@ -11,6 +15,7 @@ import numpy as np
 from datetime import datetime, timedelta
 import requests
 import os
+from PIL import Image
 from dotenv import load_dotenv
 
 from ultralytics import YOLO
@@ -177,12 +182,44 @@ def analysis(req):
         # cv2.waitKey(0)
         image_data = np.array(res_plotted, dtype=np.uint8)
         # image = cv2.cvtColor(image_data, cv2.COLOR_RGB2BGR)  # 이미지 생성 (BGR 형식으로)
+        print(image_data)
+        # retval, buffer = cv2.imencode('.png', image_data)
+        # image_base64 = base64.b64encode(buffer).decode('utf-8')
 
-        retval, buffer = cv2.imencode('.png', image_data)
-        image_base64 = base64.b64encode(buffer).decode('utf-8')
-
+        # result  = ProductAnalysis()
+        # result.image = image_data
+        # image = Image.fromarray(image_data.astype('uint8'))
+        # print(image)
+        # PIL 이미지를 BytesIO를 사용하여 파일로 변환
+        # image_io = BytesIO()
+        # image.save(image_io, format='PNG')  # 이미지를 PNG 형식으로 저장하거나 원하는 형식으로 변경 가능
+        img = cv2.cvtColor(image_data, cv2.COLOR_RGB2BGR)
+        img = Image.fromarray(img.astype('uint8'))
         
-
-        return JsonResponse({'response':image_base64})
+        img.show()
+        
+        # # 이미지를 BytesIO로 저장
+        image_io = BytesIO()
+        img.save(image_io, format='PNG')  # 이미지를 원하는 형식으로 저장(PNG, JPEG 등)
+        if not os.path.exists('product/detect'):
+            os.makedirs('product/detect')
+        # BytesIO를 Django의 File 객체로 변환하여 ImageField에 저장
+        product_analysis = ProductAnalysis()
+        product_analysis.image.save('image.png', File(image_io), save=True)
+        return JsonResponse({'response':product_analysis.id})
         
     return JsonResponse({'response':True})
+
+def get_image(req, image_url):
+    # 이미지가 저장된 모델에서 해당 이미지의 인스턴스를 가져옵니다.
+    # return JsonResponse({'response':True})
+    
+    print(123123)
+    image_instance = get_object_or_404(ProductAnalysis, pk=image_url)
+    
+    # 이미지 파일의 경로를 가져옵니다.
+    image_path = image_instance.image.path
+    print(image_path)
+    # 이미지 파일을 읽어와 HTTP 응답으로 반환합니다.
+    with open(image_path, 'rb') as f:
+        return HttpResponse(f.read(), content_type='image/png')  # 이미지 타입에 따라 content_type 변경 가능

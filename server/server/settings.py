@@ -39,32 +39,39 @@ INSTALLED_APPS = [
     "favorite",
     "product",
     "report",
+    'query',
     "alert",
 ]
 
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
-    "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
+    "django.middleware.common.CommonMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
-    'corsheaders.middleware.CorsMiddleware'
 ]
 
-CORS_ORIGIN_ALLOW_ALL = True
 
-CORS_ALLOW_CREDENTIALS = True
+CORS_ALLOW_CREDENTIALS = True  # True 상태면 HTTP 상태에서도 쿠키를 요청에 포함
+
+CORS_ORIGIN_ALLOW_ALL = True  # 모든 도메인에 대해 허용
+CORS_ORIGIN_WHITELIST = (
+    'http://localhost:3000',
+    'http://127.0.0.1:3000',
+    'https://localhost:3000',
+    'https://127.0.0.1:3000',
+    'https://www.dietshrink.site',
+)
 
 CSRF_TRUSTED_ORIGINS = (
     'http://localhost:3000',
     'http://127.0.0.1:3000',
-)
-
-CORS_ORIGIN_WHITELIST = (
-    'http://localhost:3000',
-    'http://127.0.0.1:3000',
+    'https://localhost:3000',
+    'https://127.0.0.1:3000',
+    'https://www.dietshrink.site',
 )
 
 
@@ -147,7 +154,8 @@ TIME_ZONE = "Asia/Seoul"
 
 USE_I18N = True
 
-USE_TZ = True
+# Local 서버 시간을 사용해 DB에 저장하기 위해 False로 변경(한국시간) 23.12.27 yujin
+USE_TZ = False
 
 STATIC_URL = "static/"
 

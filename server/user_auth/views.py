@@ -24,6 +24,30 @@ from .decorators import token_required
 from .models import User
 
 
+@csrf_exempt
+@require_http_methods(["GET"])
+@token_required
+def get_user_info(req):
+    try:
+        user = User.objects.get(id=req.user.id)
+
+        user_info = {
+            'nickname': user.nickname,
+            'phone': user.phone,
+            'profile_url': user.profile_url
+        }
+
+        return JsonResponse({
+            'status': 'success',
+            'message': '유저 정보를 성공적으로 조회했습니다.',
+            'user': user_info
+        })
+
+    except User.DoesNotExist:
+        return JsonResponse({
+            'status': 'fail',
+            'message': '유저가 존재하지 않습니다.'
+        }, status=404)
 
 
 @csrf_exempt

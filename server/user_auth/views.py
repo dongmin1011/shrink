@@ -72,7 +72,7 @@ def upload_file(file, file_name):
 @token_required
 def update_profile_image(req):
     """
-        설명: 장고는 기본적으로 POST 요청에 대해서만 multipart/form-data를 처리하고, PATCH나 PUT 요청에서는 이를 처리하지     않기 때문에 개발자가 요청의 body 내용을 수동으로 파싱해야 합니다.
+        설명: 장고는 기본적으로 POST 요청에 대해서만 multipart/form-data를 처리하고, PATCH나 PUT 요청에서는 이를 처리하지 않기 때문에 개발자가 요청의 body 내용을 수동으로 파싱해야 합니다.
         작성일: 23.12.21
         작성자: yujin
     """
@@ -80,20 +80,26 @@ def update_profile_image(req):
     if req.content_type == 'multipart/form-data':
         _, files = req.parse_file_upload(req.META, req)
 
-    image_file = files.get('image')
+    image_file = files.get('image') if files else None
 
     try:
         user = User.objects.get(phone=req.user.phone)
 
-        file_name = f'profile_images/{user.id}'
-        upload_url = upload_file(image_file, file_name)
-
-        if upload_url:
-            user.profile_url = upload_url
-            user.save()
-            return JsonResponse({'status': 'success', 'message': '프로필 이미지가 변경되었습니다.'})
+        # 이미지 파일이 제공되지 않은 경우 기본 이미지 URL 설정
+        if not image_file:
+            user.profile_url = f'https://api.dicebear.com/7.x/pixel-art/svg?seed={user.phone}'
         else:
-            return JsonResponse({'status': 'fail', 'message': '이미지 업로드 실패'}, status=500)
+            file_name = f'profile_images/{user.id}'
+            upload_url = upload_file(image_file, file_name)
+
+            if upload_url:
+                user.profile_url = upload_url
+            else:
+                return JsonResponse({'status': 'fail', 'message': '이미지 업로드 실패'}, status=500)
+
+        user.save()
+        return JsonResponse({'status': 'success', 'message': '프로필 이미지가 변경되었습니다.'})
+
     except User.DoesNotExist:
         return JsonResponse({'status': 'fail', 'message': '사용자가 존재하지 않습니다.'}, status=404)
 

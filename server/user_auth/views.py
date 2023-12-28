@@ -88,6 +88,7 @@ def update_profile_image(req):
         # 이미지 파일이 제공되지 않은 경우 기본 이미지 URL 설정
         if not image_file:
             user.profile_url = f'https://api.dicebear.com/7.x/pixel-art/svg?seed={user.phone}'
+            user.save()
 
             return JsonResponse({'status': 'success', 'message': '프로필 이미지가 초기화되었습니다.'})
             

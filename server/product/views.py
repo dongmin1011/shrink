@@ -1,12 +1,13 @@
 import base64
 from io import BytesIO
+import json
 import cv2
-from django.http import HttpResponse, JsonResponse
+from django.http import HttpResponse, JsonResponse, StreamingHttpResponse
 from django.shortcuts import get_object_or_404
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 from django.core.files.storage import FileSystemStorage
-from .models import ProductAnalysis
+from .models import *
 from django.core.files import File
 
 
@@ -143,24 +144,13 @@ def select (req):
     return JsonResponse(productResult)
 
 @csrf_exempt
-# @require_http_methods(["POST"])
+@require_http_methods(["POST"])
 def analysis(req):
     print(req)
     if req.method =='POST' and req.FILES['image']:
-        # images = req.FILES.getlist('image')
-        # for image in images:
-        #     # img = cv2.imread(image.path, cv2.IMREAD_GRAYSCALE)
-        #     print(image)
-        # for key in req.FILES:
-        #     print(req.FILES[key])
-        #     file = req.FILES[key]
+        
 
-        #     fs = FileSystemStorage()
-        #     if not os.path.exists('file'):
-        #         os.makedirs('file')
-        #     filename = fs.save('file/'+file.name, file)
-        #     file_url = fs.url(filename)
-        #     file_url = '.'+file_url
+        
         image = req.FILES['image']
         fs = FileSystemStorage()
         if not os.path.exists('file'):
@@ -169,30 +159,14 @@ def analysis(req):
         file_url = fs.url(filename)
         file_url = '.'+file_url
         
-        # model = YOLO("yolov8n.yaml")  # build a new model from scratch
-        # model.train(data="coco128.yaml", epochs=3)
+        
         results = model.predict(file_url)
         res_plotted = results[0].plot()
-        # image_b64 = base64.b64encode(res_plotted).decode()
-        # print(image_b64)
-        # print(res_plotted)
-
-        # 이미지 창에 출력
-        # cv2.imshow('Image', res_plotted)
-        # cv2.waitKey(0)
+        
         image_data = np.array(res_plotted, dtype=np.uint8)
         # image = cv2.cvtColor(image_data, cv2.COLOR_RGB2BGR)  # 이미지 생성 (BGR 형식으로)
         print(image_data)
-        # retval, buffer = cv2.imencode('.png', image_data)
-        # image_base64 = base64.b64encode(buffer).decode('utf-8')
-
-        # result  = ProductAnalysis()
-        # result.image = image_data
-        # image = Image.fromarray(image_data.astype('uint8'))
-        # print(image)
-        # PIL 이미지를 BytesIO를 사용하여 파일로 변환
-        # image_io = BytesIO()
-        # image.save(image_io, format='PNG')  # 이미지를 PNG 형식으로 저장하거나 원하는 형식으로 변경 가능
+        
         img = cv2.cvtColor(image_data, cv2.COLOR_RGB2BGR)
         img = Image.fromarray(img.astype('uint8'))
         
@@ -223,3 +197,203 @@ def get_image(req, image_url):
     # 이미지 파일을 읽어와 HTTP 응답으로 반환합니다.
     with open(image_path, 'rb') as f:
         return HttpResponse(f.read(), content_type='image/png')  # 이미지 타입에 따라 content_type 변경 가능
+    
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def selectProduct(request):
+    # print(1231213)
+    if request.method == 'POST':
+        # print(1231213)
+        # data = json.loads(req.body)
+        # content = data.get('content')
+        data = json.loads(request.body)
+        
+        name_to_search = data.get('product_name')
+        # period_to_search = data.get('period')
+        print(name_to_search)
+        try:
+            products = Product.objects.filter(product_name=name_to_search)
+            price_list = []
+            for product in products:
+                print(product.product_id)
+                prices = PriceChange.objects.filter(product_id=product.product_id)
+                print(prices)
+                temp = list(prices.values())
+
+                print(temp)  # 가격 변경 정보를 리스트로 출력
+                price_list.append({product.product_id:temp})
+        except Product.DoesNotExist:
+            products = None
+    
+    serialized_products = list(products.values())
+    return JsonResponse({'response':serialized_products, 'price': price_list})
+
+
+
+def test(req): ## 상품 api -> DB
+    URL = 'http://openapi.price.go.kr/openApiImpl/ProductPriceInfoService/getProductInfoSvc.do?serviceKey=elev%2BDdYEgCEiwXL1dcW5YyHQUrNmLOmCOsXZtLpyXOkaMQWobvID%2FLeqZAwouKbFDqLyzlqi8LvTN%2BTdAH3YA%3D%3D&'
+    response = requests.get(URL)
+    # print(response.text)
+    xml = response.text
+    text = BeautifulSoup(xml, 'xml')    
+
+    items = text.find_all('item')
+    # result = set()
+    result = []
+    for item in items:
+        
+        good_id = item.find('goodId').text
+        # result.add(good_id)
+        good_name = item.find('goodName').text.split('(')[0].replace(' ','')        
+        detail_mean = item.find('detailMean').text if item.find('detailMean') is not None else None
+        weight = item.find('goodTotalCnt').text if item.find('goodTotalCnt') is not None else None
+        # Product 모델에 데이터 저장
+        product = Product(
+            product_id=good_id,
+            product_name=good_name,
+            detail=detail_mean,
+            weight=weight,
+        )
+        print(product.product_id)
+        product.save()  # 데이터베이스에 저장
+
+                
+
+    return JsonResponse({'response': True})
+
+
+def find_first_friday():
+    date = datetime.now()
+    print(date.year, date.month, date.day)
+    date = datetime(date.year, date.month, date.day)
+    while True:
+        temp = date.strftime('%Y%m%d')
+
+        PRICE_CHANGE_URL = f'http://openapi.price.go.kr/openApiImpl/ProductPriceInfoService/getProductPriceInfoSvc.do?serviceKey=elev%2BDdYEgCEiwXL1dcW5YyHQUrNmLOmCOsXZtLpyXOkaMQWobvID%2FLeqZAwouKbFDqLyzlqi8LvTN%2BTdAH3YA%3D%3D&goodInspectDay={temp}&goodId=1182'
+        price_change = requests.get(PRICE_CHANGE_URL).text
+        soup = BeautifulSoup(price_change, 'xml')
+        good_price_vo_exists = soup.find('iros.openapi.service.vo.goodPriceVO')
+        if not good_price_vo_exists:
+            date = date - timedelta(days=1)
+        else:
+            print(date)
+            return date
+    
+
+def test2(req): # 상품정보로 가격정보 저장
+    products = Product.objects.all()
+    print(len(products))
+    result = []
+    # print(find_first_friday())
+    date = find_first_friday()
+    # date = datetime(23, 12, 22)
+    # date = date.strftime('%Y%m%d')
+    while True:
+        
+        temp = date.strftime('%Y%m%d')
+        
+        for product in products:
+            print(product.product_id, product.product_name)
+            try:
+                PRICE_CHANGE_URL = f'http://openapi.price.go.kr/openApiImpl/ProductPriceInfoService/getProductPriceInfoSvc.do?serviceKey=elev%2BDdYEgCEiwXL1dcW5YyHQUrNmLOmCOsXZtLpyXOkaMQWobvID%2FLeqZAwouKbFDqLyzlqi8LvTN%2BTdAH3YA%3D%3D&goodInspectDay={temp}&goodId={product.product_id}'
+                price_change = requests.get(PRICE_CHANGE_URL).text
+                price_change.raise_for_status()
+            except requests.exceptions.RequestException as e:
+                print(f"요청 중 오류 발생: {e}")
+            # print(price_change)
+            soup = BeautifulSoup(price_change, 'xml')
+            # print(soup)
+            max_price = 0
+            min_price = float('inf')
+            # date = '20231222'
+            mean_price = 0
+            count = 0
+            good_price_vo_exists = soup.find('iros.openapi.service.vo.goodPriceVO')
+            if not good_price_vo_exists:
+                print('-'*30, 'continue')
+                continue
+            for item in soup.find_all('iros.openapi.service.vo.goodPriceVO'):
+                price = int(item.find('goodPrice').text)
+                mean_price += price
+                count+=1
+                max_price = max(max_price, price)
+                min_price = min(min_price, price)
+                # print(price)
+            # print(count)
+            try: 
+                mean_price = mean_price//count
+                print(max_price, min_price, mean_price)
+                # result.append((max_price, min_price, mean_price))
+            except ZeroDivisionError:
+                # result.append(None)
+                mean_price = None
+                max_price = None
+                min_price = None
+                print(None)
+            # break
+            print('-'*30,date)
+            price_change = PriceChange(
+                product = product,
+                date = date,
+                price = mean_price,
+                max_price = max_price,
+                min_price = min_price
+            )
+            price_change.save()
+        date = date - timedelta(days=14)
+        if date<datetime(2018,8,31):
+            break
+        
+        
+        
+    return JsonResponse({'response': True})
+
+
+def yolotest(req):
+
+    cap = cv2.VideoCapture(0)
+    if not cap.isOpened():
+        print("웹캠이 정상적으로 열리지 않았습니다. 확인해주세요.")
+        return
+    # Loop through the video frames
+    while cap.isOpened():
+        # Read a frame from the video
+        success, frame = cap.read()
+        if not success:
+            print("프레임을 읽을 수 없습니다.")
+            break
+        if success:
+            # Run YOLOv8 inference on the frame
+            results = model(frame)
+
+            # Visualize the results on the frame
+            annotated_frame = results[0].plot()
+
+            # Display the annotated frame
+            cv2.imshow("YOLOv8 Inference", annotated_frame)
+        if cv2.waitKey(1) & 0xFF == ord('q'):  # 'q' 키를 누르면 종료
+            break
+
+
+
+def stream_video(request):
+    cap = cv2.VideoCapture(0)
+
+    def generate_frames():
+        while True:
+            success, frame = cap.read()
+            if not success:
+                break
+            else:
+                # Run YOLOv8 inference on the frame
+                results = model(frame)
+
+                # Visualize the results on the frame
+                annotated_frame = results[0].plot()
+                ret, buffer = cv2.imencode('.jpg', annotated_frame)
+                frame = buffer.tobytes()
+                yield (b'--frame\r\n'
+                       b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
+
+    return StreamingHttpResponse(generate_frames(), content_type='multipart/x-mixed-replace; boundary=frame')

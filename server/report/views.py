@@ -18,14 +18,14 @@ from django.utils import timezone
 
 @csrf_exempt
 @require_http_methods(["POST"])
-# @token_required
+@token_required
 def write_report(req):
-    # existing_user = req.user
-    # if existing_user.is_anonymous:
-    #     return JsonResponse({
-    #         'status': 'fail',
-    #         'message':'사용자 정보 없음'
-    #     })
+    existing_user = req.user
+    if existing_user.is_anonymous:
+        return JsonResponse({
+            'status': 'fail',
+            'message':'사용자 정보 없음'
+        })
     
     uploaded_images = req.FILES.getlist('image')  # 여러 사진을 가져오기  # 파일 가져오기
     json_data = json.loads(req.POST['data'])  # JSON 데이터 가져오기
@@ -38,7 +38,7 @@ def write_report(req):
         
     
     
-    existing_user = User.objects.get(phone='01066594660')
+    # existing_user = User.objects.get(phone='01066594660')
     report = Report.objects.create(
         user=existing_user,  # 위에서 가져온 기존 User 객체를 연결합니다
         created_at=timezone.now(),

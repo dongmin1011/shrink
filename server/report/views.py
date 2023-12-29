@@ -1,5 +1,6 @@
 import json
 from django.http import JsonResponse
+from django.shortcuts import get_object_or_404
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 from user_auth.models import User
@@ -104,3 +105,33 @@ def selectUser(req):
         return JsonResponse({'status':'success', "response":reports_list})
     else:
         return JsonResponse({'status':'fail',"response":None})
+    
+#신고내용 삭제
+@require_http_methods(["DELETE"])
+@csrf_exempt
+@token_required
+def delete_report(req, query_id):
+    # print
+    try:
+        queryboard = get_object_or_404(Report, id=query_id)
+        if queryboard.user != req.user:
+            return JsonResponse({
+                'status': 'fail',
+                'message': '게시물 삭제 권한이 없습니다.'
+            }, status=403)
+
+        queryboard.delete()
+        return JsonResponse({
+            'status': 'success',
+            'message': f'{query_id}번 게시물이 성공적으로 삭제되었습니다.'
+        })
+    except Report.DoesNotExist:
+        return JsonResponse({
+            'status': 'fail',
+            'message': '해당 게시물을 찾을 수 없습니다.'
+        }, status=404)
+    except Exception as e:
+        return JsonResponse({
+            'status': 'fail',
+            'message': f'게시물 삭제 중 오류가 발생했습니다: {str(e)}'
+        }, status=500)

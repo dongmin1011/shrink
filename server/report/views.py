@@ -84,10 +84,16 @@ def selectALL(req):
     # Report 모델의 모든 객체 조회
     all_reports = Report.objects.all().values()
     for report in all_reports:
+        user = User.objects.get(id=report['user_id'])
+        print(user)
+        
+        report['user_id']=None
+        report['user_name'] = user.nickname
+        
         status_display = dict(Report.STATUS_CHOICES).get(report['status'])
         # print("123", status_display)
         report['status'] = status_display
-        report_image = ReportImage.objects.filter(report=report['id']).values()
+        report_image = ReportImage.objects.filter(report=report['id']).values('id')
         print(list(report_image))
         report['images'] = list(report_image)
         
@@ -107,10 +113,18 @@ def select(req):
     
     desired_product_reports = Report.objects.filter(product_name__icontains=product).values( )
     for report in desired_product_reports:
+        
+        user = User.objects.get(id=report['user_id'])
+        print(user)
+        
+        report['user_id']=None
+        report['user_name'] = user.nickname
+        
+        
         status_display = dict(Report.STATUS_CHOICES).get(report['status'])
         # print("123", status_display)
         report['status'] = status_display
-        report_image = ReportImage.objects.filter(report=report['id']).values()
+        report_image = ReportImage.objects.filter(report=report['id']).values('id')
         print(list(report_image))
         report['images'] = list(report_image)
         
@@ -135,10 +149,18 @@ def selectUser(req):
         })
     desired_product_reports = Report.objects.filter(user=existing_user).values()
     for report in desired_product_reports:
+        
+        user = User.objects.get(id=report['user_id'])
+        print(user)
+        
+        report['user_id']=None
+        report['user_name'] = user.nickname
+        
+        
         status_display = dict(Report.STATUS_CHOICES).get(report['status'])
         # print("123", status_display)
         report['status'] = status_display
-        report_image = ReportImage.objects.filter(report=report['id']).values()
+        report_image = ReportImage.objects.filter(report=report['id']).values('id')
         print(list(report_image))
         report['images'] = list(report_image)
         

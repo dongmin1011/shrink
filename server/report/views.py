@@ -104,6 +104,32 @@ def selectALL(req):
         'status':'success',
         'response':all_reports
     })
+def select_detail(req, query_id):
+    try:
+        report = Report.objects.get(id=query_id)
+        print(report)
+        report_image = ReportImage.objects.filter(report=report.id).values('id')
+
+        report_values = {
+            "id": report.id,
+            "product_name": report.product_name,
+            "price": report.price,
+            "weight": report.weight,
+            "created_at": report.created_at,
+            "content": report.content,
+            "status": report.status,
+            "user_name": report.user.nickname,
+            "images": list(report_image)
+        }
+        return JsonResponse({
+            'status':'success',
+            'response':report_values
+        })
+    except :
+        return JsonResponse({
+            'status':'fail',
+            'response': None
+        })
 
 ## 제품 이름 입력시 신고된 내용이 있는지 출력 - 만약 신고내용이 없다면 {response:null}
 @csrf_exempt
@@ -178,14 +204,14 @@ def selectUser(req):
 def delete_report(req, query_id):
     # print
     try:
-        queryboard = get_object_or_404(Report, id=query_id)
-        if queryboard.user != req.user:
+        report = get_object_or_404(Report, id=query_id)
+        if report.user != req.user:
             return JsonResponse({
                 'status': 'fail',
                 'message': '게시물 삭제 권한이 없습니다.'
             }, status=403)
 
-        queryboard.delete()
+        report.delete()
         return JsonResponse({
             'status': 'success',
             'message': f'{query_id}번 게시물이 성공적으로 삭제되었습니다.'
@@ -199,4 +225,59 @@ def delete_report(req, query_id):
         return JsonResponse({
             'status': 'fail',
             'message': f'게시물 삭제 중 오류가 발생했습니다: {str(e)}'
+        }, status=500)
+        
+
+# 신고내역 수정 - 사용자용
+@require_http_methods(["POST"])
+@csrf_exempt
+@token_required
+def update_report(req, query_id):
+    try:
+        report = get_object_or_404(Report, id=query_id)
+        if report.user != req.user:
+            return JsonResponse({
+                'status': 'fail',
+                'message': '게시물 수정 권한이 없습니다.'
+            }, status=403)
+        # print(report)
+        # data = json.loads(req.body)
+        # queryboard.title = data.get('title', queryboard.title)
+        # queryboard.content = data.get('content', queryboard.content)
+        # queryboard.save()
+        update_images = req.FILES.getlist('image')  # 여러 사진을 가져오기  # 파일 가져오기
+        # print(update_images)
+
+        # json_data = json.loads(req.body)  # JSON 데이터 가져오기
+        json_data = json.loads(req.POST['data'])
+        print(json_data)
+        report.product_name = json_data.get('product', report.product_name)
+        report.weight = json_data.get('weight', report.weight)
+        report.price = int(json_data.get('price', report.price))
+        report.content = json_data.get('content', report.content)
+
+        # 이미지 필드 업데이트
+        if update_images:
+            # 업로드된 이미지가 있을 경우
+            report.reportimage_set.all().delete()  # 기존 이미지 삭제
+
+            for image in update_images:
+                new_report_image = ReportImage(report=report)
+                new_report_image.image.save('image.png', image, save=True)
+
+        report.save()  # 변경된 필드들 저장
+
+        return JsonResponse({
+            'status': 'success',
+            'message': f'{report.id}번 게시물이 성공적으로 수정되었습니다.'
+        })
+    except json.JSONDecodeError:
+        return JsonResponse({
+            'status': 'fail',
+            'message': '잘못된 형식의 데이터입니다.'
+        }, status=400)
+    except Exception as e:
+        return JsonResponse({
+            'status': 'fail',
+            'message': f'게시물 수정 중 오류가 발생했습니다: {str(e)}'
         }, status=500)

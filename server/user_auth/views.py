@@ -289,18 +289,13 @@ def send_auth_code(req):
     data = json.loads(req.body)
     phone = data.get('phone')
 
-    user = User.objects.get(phone=phone)
+    user = User.objects.filter(phone=phone).first()
 
-    print(user)
-
-    if user:
+    if user is not None:
         return JsonResponse({
             'status': 'fail',
             'message': '이미 가입한 사용자입니다.'
         }, status=404)
-
-
-
 
 
     if not re.match(r'^01[0-9]{8,9}$', phone):

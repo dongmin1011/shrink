@@ -217,7 +217,7 @@ def selectProduct(request):
             product_list = []
             for product in products:
                 print(product.product_id)
-                prices = PriceChange.objects.filter(product_id=product.product_id)
+                prices = PriceChange.objects.filter(product_id=product.product_id).order_by('date')
                 print(prices)
                 temp = list(prices.values())
 

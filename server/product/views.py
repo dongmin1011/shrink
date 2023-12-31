@@ -213,8 +213,8 @@ def selectProduct(request):
         # period_to_search = data.get('period')
         print(name_to_search)
         try:
-            products = Product.objects.filter(product_name=name_to_search)
-            price_list = []
+            products = Product.objects.filter(product_name__icontains=name_to_search)
+            product_list = []
             for product in products:
                 print(product.product_id)
                 prices = PriceChange.objects.filter(product_id=product.product_id)
@@ -222,12 +222,24 @@ def selectProduct(request):
                 temp = list(prices.values())
 
                 print(temp)  # 가격 변경 정보를 리스트로 출력
-                price_list.append({product.product_id:temp})
+                # price_list.append({product.product_id:temp})
+                product_info = {
+                    'product_id': product.product_id,
+                    'product_name': product.product_name,
+                    'product_detail': product.detail,
+                    'product_weight': product.weight
+                }
+                price_dict = {
+                    product.product_name: product_info,
+                    'prices': temp
+                }
+                product_list.append(price_dict)
+
         except Product.DoesNotExist:
             products = None
     
     serialized_products = list(products.values())
-    return JsonResponse({'response':serialized_products, 'price': price_list})
+    return JsonResponse({'response':product_list})
 
 
 
@@ -245,7 +257,7 @@ def test(req): ## 상품 api -> DB
         
         good_id = item.find('goodId').text
         # result.add(good_id)
-        good_name = item.find('goodName').text.split('(')[0].replace(' ','')        
+        good_name = item.find('goodName').text.replace(' ','')        
         detail_mean = item.find('detailMean').text if item.find('detailMean') is not None else None
         weight = item.find('goodTotalCnt').text if item.find('goodTotalCnt') is not None else None
         # Product 모델에 데이터 저장
@@ -292,13 +304,18 @@ def test2(req): # 상품정보로 가격정보 저장
     while True:
         
         temp = date.strftime('%Y%m%d')
-        
+        formatted_date = datetime.strptime(temp, '%Y%m%d').date()
         for product in products:
             print(product.product_id, product.product_name)
+            result = PriceChange.objects.filter(product_id=product.product_id, date=formatted_date)
+            # 결과가 있는 경우에만 continue
+            if result.exists():
+                continue
+
             try:
                 PRICE_CHANGE_URL = f'http://openapi.price.go.kr/openApiImpl/ProductPriceInfoService/getProductPriceInfoSvc.do?serviceKey=elev%2BDdYEgCEiwXL1dcW5YyHQUrNmLOmCOsXZtLpyXOkaMQWobvID%2FLeqZAwouKbFDqLyzlqi8LvTN%2BTdAH3YA%3D%3D&goodInspectDay={temp}&goodId={product.product_id}'
                 price_change = requests.get(PRICE_CHANGE_URL).text
-                price_change.raise_for_status()
+                # price_change.raise_for_status()
             except requests.exceptions.RequestException as e:
                 print(f"요청 중 오류 발생: {e}")
             # print(price_change)

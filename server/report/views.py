@@ -210,6 +210,13 @@ def delete_report(req, query_id):
                 'status': 'fail',
                 'message': '게시물 삭제 권한이 없습니다.'
             }, status=403)
+        for report_image in report.reportimage_set.all():
+                image_path = report_image.image.path  # image_field는 실제 이미지를 담는 필드명입니다.
+                print(image_path)
+                # 파일 삭제
+                if os.path.exists(image_path):
+                    os.remove(image_path)
+        report.reportimage_set.all().delete()  # 기존 이미지 삭제
 
         report.delete()
         return JsonResponse({
@@ -259,6 +266,12 @@ def update_report(req, query_id):
         # 이미지 필드 업데이트
         if update_images:
             # 업로드된 이미지가 있을 경우
+            for report_image in report.reportimage_set.all():
+                image_path = report_image.image.path  # image_field는 실제 이미지를 담는 필드명입니다.
+                print(image_path)
+                # 파일 삭제
+                if os.path.exists(image_path):
+                    os.remove(image_path)
             report.reportimage_set.all().delete()  # 기존 이미지 삭제
 
             for image in update_images:

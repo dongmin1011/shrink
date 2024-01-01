@@ -111,7 +111,10 @@ def update_profile_image(req):
 
         # 이미지 파일이 제공되지 않은 경우 기본 이미지 URL 설정
         if not image_file:
-            user.profile_url = f'https://api.dicebear.com/7.x/pixel-art/svg?seed={user.phone}'
+            seed = hashlib.sha256(user.phone.encode()).hexdigest()
+            profile_url = f'https://api.dicebear.com/7.x/pixel-art/svg?seed={seed}'
+
+            user.profile_url = profile_url
             user.save()
 
             return JsonResponse({'status': 'success', 'message': '프로필 이미지가 초기화되었습니다.'})
@@ -255,7 +258,8 @@ def register_user(req):
             작성자: yujin
         '''
         if profile_url is None:
-            profile_url = f'https://api.dicebear.com/7.x/pixel-art/svg?seed=${phone}'
+            seed = hashlib.sha256(phone.encode()).hexdigest()
+            profile_url = f'https://api.dicebear.com/7.x/pixel-art/svg?seed={seed}'
 
         hashed_password = make_password(password)
 

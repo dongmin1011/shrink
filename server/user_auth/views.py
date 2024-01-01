@@ -33,7 +33,6 @@ def get_user_info(req):
 
         user_info = {
             'nickname': user.nickname,
-            'phone': user.phone,
             'profile_url': user.profile_url
         }
 

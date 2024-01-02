@@ -158,7 +158,7 @@ def select_detail(req, query_id):
 def select(req):
     data = json.loads(req.body)
     product = data.get('product')
-    items_per_page = data.get('per_page')
+    items_per_page = data.get('per_page', 10)
     
     desired_product_reports = Report.objects.filter(product_name__icontains=product).order_by('-created_at').values()
     
@@ -207,7 +207,7 @@ def selectUser(req):
         })
     desired_product_reports = Report.objects.filter(user=existing_user).order_by('-created_at').values()
     data = json.loads(req.body)
-    items_per_page = data.get('per_page')
+    items_per_page = data.get('per_page', 10)
     paginator = Paginator(desired_product_reports, items_per_page)
     page_obj = paginator.page(1)
     

@@ -36,5 +36,5 @@ class ProductAnalysis(models.Model):
 
     result = models.CharField(max_length=100,null=True)
     weight = models.CharField(max_length=50,null=True)
-    is_reading = models.BooleanField()
+    is_reading = models.BooleanField(default=False)
     create_at = models.DateTimeField(default=timezone.now)

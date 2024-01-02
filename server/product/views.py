@@ -7,6 +7,8 @@ from django.shortcuts import get_object_or_404
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 from django.core.files.storage import FileSystemStorage
+
+from user_auth.decorators import token_required
 from .models import *
 from django.core.files import File
 
@@ -145,41 +147,73 @@ def select (req):
 
 @csrf_exempt
 @require_http_methods(["POST"])
+@token_required
 def analysis(req):
     print(req)
-    if req.method =='POST' and req.FILES['image']:
-        
+    
+    if req.method =='POST' and req.FILES['image']:        
+        user = req.user
 
-        
         image = req.FILES['image']
         fs = FileSystemStorage()
-        if not os.path.exists('file'):
-            os.makedirs('file')
-        filename = fs.save('file/'+image.name, image)
+        if not os.path.exists('product/file'):
+            os.makedirs('product/file')
+        filename = fs.save('product/file/'+image.name, image)
         file_url = fs.url(filename)
         file_url = '.'+file_url
         
-        
-        results = model.predict(file_url)
+
+        results = model.predict(file_url,  save_txt=True)
+        os.remove(file_url)
         res_plotted = results[0].plot()
+        print('-'*30, results[0])
+        labels = results[0].names
+        file_path = results[0].path
+        save_dir = results[0].save_dir
+        file_path = file_path.split('\\')[-1].split('.')[0]+'.txt'
+        # print(file_path)
+        # print(save_dir+'\\'+file_path)
+        # file_path = save_dir+'\\labels\\'+file_path
+        file_path = os.path.join(save_dir, 'labels', file_path)
+        print(file_path)
+        file_path = file_path.replace('\\','/')
+        print(file_path)
         
+
+        try:
+            with open(file_path, 'r') as file:
+                for line in file:
+                    # 공백을 기준으로 분할하여 첫 번째 값 가져오기
+                    first_value = int(line.split()[0])
+                    print(labels[first_value])  # 각 행의 첫 번째 값 출력
+
+        except FileNotFoundError:
+            print(f"파일 '{file_path}'을(를) 찾을 수 없습니다.")
+        print(type(results[0]))
         image_data = np.array(res_plotted, dtype=np.uint8)
         # image = cv2.cvtColor(image_data, cv2.COLOR_RGB2BGR)  # 이미지 생성 (BGR 형식으로)
-        print(image_data)
+        # print(image_data)
         
-        img = cv2.cvtColor(image_data, cv2.COLOR_RGB2BGR)
-        img = Image.fromarray(img.astype('uint8'))
-        
-        img.show()
-        
-        # # 이미지를 BytesIO로 저장
+        # image_data를 OpenCV로 다루고 PIL Image 객체로 변환 (RGB 형식)
+        img = cv2.cvtColor(image_data, cv2.COLOR_BGR2RGB)
+        img_pil = Image.fromarray(img.astype('uint8'))
+
+        # BytesIO에 이미지 저장
         image_io = BytesIO()
-        img.save(image_io, format='PNG')  # 이미지를 원하는 형식으로 저장(PNG, JPEG 등)
+        img_pil.save(image_io, format='PNG')  # 이미지를 원하는 형식으로 저장(PNG, JPEG 등)
+        image_io.seek(0)  # BytesIO의 파일 포인터를 처음으로 이동
+
+        # ProductAnalysis 모델 객체 생성 및 이미지 저장
         if not os.path.exists('product/detect'):
             os.makedirs('product/detect')
-        # BytesIO를 Django의 File 객체로 변환하여 ImageField에 저장
+
         product_analysis = ProductAnalysis()
-        product_analysis.image.save('image.png', File(image_io), save=True)
+        product_analysis.user = user
+        product_analysis.save()  # 데이터베이스에 모델 객체 저장
+
+        # BytesIO를 Django의 File 객체로 변환하여 ImageField에 저장
+        product_analysis.image.save('image.png', image_io, save=True)
+        
         return JsonResponse({'response':product_analysis.id})
         
     return JsonResponse({'response':True})

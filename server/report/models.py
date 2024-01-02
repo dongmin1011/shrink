@@ -7,9 +7,9 @@ from django.utils import timezone
 class Report(models.Model):
     
     STATUS_CHOICES = [
-        (1, '접수'),
-        (2, '처리중'),
-        (3, '완료'),
+        (1, '보류'),
+        (2, '의심'),
+        (3, '슈링크'),
     ]
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     product_name = models.CharField(max_length=100)
@@ -17,6 +17,7 @@ class Report(models.Model):
     weight = models.CharField(max_length=50)
     created_at = models.DateTimeField(default=timezone.now)
     content = models.CharField(max_length=500, default="")
+    unit = models.CharField(max_length=10, null=True)
     status = models.IntegerField(choices=STATUS_CHOICES, default=1)
     
     class Meta:
@@ -27,3 +28,14 @@ class ReportImage(models.Model):
 
     report = models.ForeignKey(Report, on_delete=models.CASCADE)
     image = models.ImageField(blank=True, upload_to='report/image/')
+
+
+class Like(models.Model):
+    report = models.ForeignKey(Report, on_delete=models.CASCADE, related_name='report_likes')
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='user_likes')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    
+    class Meta:
+        unique_together = ('report', 'user')
+        db_table = 'report_like'

@@ -170,11 +170,11 @@ def analysis(req):
         labels = results[0].names
         file_path = results[0].path
         save_dir = results[0].save_dir
-        file_path = file_path.split('\\')[-1].split('.')[0]+'.txt'
+        file_path = file_path.split('/')[-1].split('.')[0]+'.txt'
         # print(file_path)
         # print(save_dir+'\\'+file_path)
-        # file_path = save_dir+'\\labels\\'+file_path
-        file_path = os.path.join(save_dir, 'labels', file_path)
+        file_path = save_dir+'/labels/'+file_path
+        # file_path = os.path.join(save_dir, 'labels', file_path)
         print(file_path)
         file_path = file_path.replace('\\','/')
         print(file_path)

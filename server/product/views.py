@@ -248,9 +248,9 @@ def token_analysis_list(req):
     data = json.loads(req.body)
     is_reading = data.get('is_reading',False)
     if is_reading: #is_reading이 true = 읽지 않은 내용만 반환
-        product_analysis = ProductAnalysis.objects.filter(user=user, is_reading=False)
+        product_analysis = ProductAnalysis.objects.filter(user=user, is_reading=False).order_by('-create_at')
     else:   #is_reading이 false = 전체 내용 반환
-        product_analysis = ProductAnalysis.objects.filter(user=user)
+        product_analysis = ProductAnalysis.objects.filter(user=user).order_by('-create_at')
     response = {}
     detect_list = []
     for analysis in product_analysis:

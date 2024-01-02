@@ -103,6 +103,8 @@ def selectALL(req):
     for report in page_obj:
         print(report['id'])
         user = User.objects.get(id=report['user_id'])
+        like_count = Like.objects.filter(report=report['id']).count()  ##report의 좋아요 개수 가지고 오기
+
         # print(user)
         
         report['user_id']=None
@@ -115,6 +117,7 @@ def selectALL(req):
         report_image = ReportImage.objects.filter(report=report['id']).values('id')
         # print(list(report_image))
         report_image = list(report_image)
+        report['like'] = like_count
         
         if report_image:
             report['thumbnail'] = report_image[0]['id']

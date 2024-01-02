@@ -34,7 +34,13 @@ class ProductAnalysis(models.Model):
     image = models.ImageField(blank=True, upload_to='product/detect/')
     user = models.ForeignKey(User, on_delete=models.CASCADE,  null=True)
 
-    result = models.CharField(max_length=100,null=True)
-    weight = models.CharField(max_length=50,null=True)
+    
     is_reading = models.BooleanField(default=False)
     create_at = models.DateTimeField(default=timezone.now)
+    
+class ProductAnalysisResults(models.Model):
+    productAnalysis = models.ForeignKey(ProductAnalysis, on_delete=models.CASCADE)
+    
+    product = models.ForeignKey(Product , on_delete=models.CASCADE, null=True)
+    result = models.CharField(max_length=100,null=True)
+    weight = models.CharField(max_length=50,null=True)

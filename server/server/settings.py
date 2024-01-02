@@ -103,6 +103,9 @@ DATABASES = {
         'PASSWORD': os.getenv('AWS_RDS_MYSQL_PASSWORD'),
         'HOST': os.getenv('AWS_RDS_MYSQL_HOST'),
         'PORT': '3306',
+        'OPTIONS': {
+            'init_command': "SET time_zone='+09:00'",
+        },
     },
     'mongodb': {
         'ENGINE': 'djongo',

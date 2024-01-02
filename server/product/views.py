@@ -178,7 +178,7 @@ def analysis(req):
         print(file_path)
         file_path = file_path.replace('\\','/')
         print(file_path)
-        
+         
 
         try:
             with open(file_path, 'r') as file:

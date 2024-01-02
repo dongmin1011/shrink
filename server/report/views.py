@@ -10,6 +10,8 @@ from user_auth.models import User
 from user_auth.decorators import token_required
 from django.core.files.storage import FileSystemStorage
 from django.core.files import File
+from django.core.paginator import Paginator
+
 
 
 from .models import Report, ReportImage
@@ -82,11 +84,24 @@ def get_image(req, image_url):
 
 ## 신고된 제품 전체 출력
 def selectALL(req):
+    
+    
     # Report 모델의 모든 객체 조회
     all_reports = Report.objects.all().order_by('-created_at').values()
-    for report in all_reports:
+    
+    # page_number = req.GET.get('page', 1)
+    items_per_page = req.GET.get('per_page', 5)
+    
+    paginator = Paginator(all_reports, items_per_page)
+    
+    
+    page_obj = paginator.page(1)
+    
+    result =[]
+    for report in page_obj:
+        print(report['id'])
         user = User.objects.get(id=report['user_id'])
-        print(user)
+        # print(user)
         
         report['user_id']=None
         report['user_name'] = user.nickname
@@ -98,12 +113,13 @@ def selectALL(req):
         report_image = ReportImage.objects.filter(report=report['id']).values('id')
         print(list(report_image))
         report['images'] = list(report_image)
+        result.append(report)
         
-    all_reports = list(all_reports)
+    # all_reports = list(all_reports)
     # print(all_reports)
     return JsonResponse({
         'status':'success',
-        'response':all_reports
+        'response':result
     })
 def select_detail(req, query_id):
     try:
@@ -142,9 +158,17 @@ def select_detail(req, query_id):
 def select(req):
     data = json.loads(req.body)
     product = data.get('product')
+    items_per_page = data.get('per_page')
     
     desired_product_reports = Report.objects.filter(product_name__icontains=product).order_by('-created_at').values()
-    for report in desired_product_reports:
+    
+    paginator = Paginator(desired_product_reports, items_per_page)
+    
+    
+    page_obj = paginator.page(1)
+    
+    result = []
+    for report in page_obj:
         
         user = User.objects.get(id=report['user_id'])
         print(user)
@@ -160,10 +184,11 @@ def select(req):
         report_image = ReportImage.objects.filter(report=report['id']).values('id')
         print(list(report_image))
         report['images'] = list(report_image)
+        result.append(report)
         
-    reports_list = list(desired_product_reports)  # QuerySet을 리스트로 변환
-    if reports_list:
-        return JsonResponse({'status':'success', "response":reports_list})
+    # reports_list = list(desired_product_reports)  # QuerySet을 리스트로 변환
+    if result:
+        return JsonResponse({'status':'success', "response":result})
     else:
         return JsonResponse({'status':'fail',"response":None})
 
@@ -181,7 +206,13 @@ def selectUser(req):
             'message':'사용자 정보 없음'
         })
     desired_product_reports = Report.objects.filter(user=existing_user).order_by('-created_at').values()
-    for report in desired_product_reports:
+    data = json.loads(req.body)
+    items_per_page = data.get('per_page')
+    paginator = Paginator(desired_product_reports, items_per_page)
+    page_obj = paginator.page(1)
+    
+    result = []
+    for report in page_obj:
         
         user = User.objects.get(id=report['user_id'])
         print(user)
@@ -197,10 +228,11 @@ def selectUser(req):
         report_image = ReportImage.objects.filter(report=report['id']).values('id')
         print(list(report_image))
         report['images'] = list(report_image)
+        result.append(report)
         
-    reports_list = list(desired_product_reports)  # QuerySet을 리스트로 변환
-    if reports_list:
-        return JsonResponse({'status':'success', "response":reports_list})
+    # reports_list = list(desired_product_reports)  # QuerySet을 리스트로 변환
+    if result:
+        return JsonResponse({'status':'success', "response":result})
     else:
         return JsonResponse({'status':'fail',"response":None})
     

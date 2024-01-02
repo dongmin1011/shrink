@@ -40,7 +40,7 @@ def write_report(req):
     content = json_data.get('content')
     unit = json_data.get('unit')
         
-    
+    print(unit)
     
     # existing_user = User.objects.get(phone='01066594660')
     report = Report.objects.create(
@@ -140,8 +140,11 @@ def select_detail(req, query_id):
         like_count = Like.objects.filter(report=report).count()  ##report의 좋아요 개수 가지고 오기
         print(like_count)
         
-        # report.annotate(like_count=Count('like'))
-        # print(user.id)
+
+        status_display = dict(Report.STATUS_CHOICES).get(report.status)
+
+        # report['status'] = status_display
+        
         report_values = {
             "id": report.id,
             "product_name": report.product_name,
@@ -149,9 +152,10 @@ def select_detail(req, query_id):
             "weight": report.weight,
             "created_at": report.created_at,
             "content": report.content,
-            "status": report.status,
+            "status": status_display,
             "user_name": report.user.nickname,
             'profile_url' : user.profile_url,
+            'likes' : like_count,
             "images": list(report_image)
         }
         return JsonResponse({
@@ -164,6 +168,40 @@ def select_detail(req, query_id):
             'status':'fail',
             'response': None
         })
+
+
+# 신고 좋아요
+@require_http_methods(["POST"])
+@csrf_exempt
+@token_required
+def like_report(req, query_id):
+    try:
+        report = get_object_or_404(Report, id=query_id)
+        user = req.user
+
+        like, created = Like.objects.get_or_create(report=report, user=user)
+        
+        if not created:
+            like.delete()
+            return JsonResponse({
+                'status': 'success',
+                'message': f'{query_id}번 게시물의 좋아요가 제거되었습니다.'
+            })
+        return JsonResponse({
+            'status': 'success',
+            'message': f'{query_id}번 게시물의 좋아요가 추가되었습니다.'
+        })
+    except Report.DoesNotExist:
+        return JsonResponse({
+            'status': 'fail',
+            'message': '해당 게시물을 찾을 수 없습니다.'
+        }, status=404)
+    except Exception as e:
+        return JsonResponse({
+            'status': 'fail',
+            'message': f'좋아요 처리 중 오류가 발생했습니다: {str(e)}'
+        }, status=500)
+
 
 ## 제품 이름 입력시 신고된 내용이 있는지 출력 - 만약 신고내용이 없다면 {response:null}
 @csrf_exempt
@@ -324,6 +362,7 @@ def update_report(req, query_id):
         report.weight = json_data.get('weight', report.weight)
         report.price = int(json_data.get('price', report.price))
         report.content = json_data.get('content', report.content)
+        report.unit = json_data.get('unit', report.unit)
 
         # 이미지 필드 업데이트
         if update_images:

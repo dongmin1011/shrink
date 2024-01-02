@@ -33,7 +33,6 @@ def get_user_info(req):
 
         user_info = {
             'nickname': user.nickname,
-            'phone': user.phone,
             'profile_url': user.profile_url
         }
 
@@ -111,7 +110,10 @@ def update_profile_image(req):
 
         # 이미지 파일이 제공되지 않은 경우 기본 이미지 URL 설정
         if not image_file:
-            user.profile_url = f'https://api.dicebear.com/7.x/pixel-art/svg?seed={user.phone}'
+            seed = hashlib.sha256(user.phone.encode()).hexdigest()
+            profile_url = f'https://api.dicebear.com/7.x/pixel-art/svg?seed={seed}'
+
+            user.profile_url = profile_url
             user.save()
 
             return JsonResponse({'status': 'success', 'message': '프로필 이미지가 초기화되었습니다.'})
@@ -255,7 +257,8 @@ def register_user(req):
             작성자: yujin
         '''
         if profile_url is None:
-            profile_url = f'https://api.dicebear.com/7.x/pixel-art/svg?seed=${phone}'
+            seed = hashlib.sha256(phone.encode()).hexdigest()
+            profile_url = f'https://api.dicebear.com/7.x/pixel-art/svg?seed={seed}'
 
         hashed_password = make_password(password)
 
@@ -289,18 +292,13 @@ def send_auth_code(req):
     data = json.loads(req.body)
     phone = data.get('phone')
 
-    user = User.objects.get(phone=phone)
+    user = User.objects.filter(phone=phone).first()
 
-    print(user)
-
-    if user:
+    if user is not None:
         return JsonResponse({
             'status': 'fail',
             'message': '이미 가입한 사용자입니다.'
         }, status=404)
-
-
-
 
 
     if not re.match(r'^01[0-9]{8,9}$', phone):

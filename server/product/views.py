@@ -170,22 +170,22 @@ def analysis(req):
         labels = results[0].names
         file_path = results[0].path
         save_dir = results[0].save_dir
-        file_path = file_path.split('/')[-1].split('.')[0]+'.txt'
-        # print(file_path)
-        # print(save_dir+'\\'+file_path)
-        file_path = save_dir+'/labels/'+file_path
-        # file_path = os.path.join(save_dir, 'labels', file_path)
+        file_path = file_path.split('/')[-1].split('.')[0]+'.txt'#aws개발 환경
+        file_path = save_dir+'/labels/'+file_path             #aws개발 환경
+        # file_path = file_path.split('\\')[-1].split('.')[0]+'.txt'#로컬개발 환경
+        # file_path = os.path.join(save_dir, 'labels', file_path) #로컬개발 환경
         print(file_path)
         file_path = file_path.replace('\\','/')
         print(file_path)
          
-
+        detect_list = []
         try:
             with open(file_path, 'r') as file:
                 for line in file:
                     # 공백을 기준으로 분할하여 첫 번째 값 가져오기
                     first_value = int(line.split()[0])
                     print(labels[first_value])  # 각 행의 첫 번째 값 출력
+                    detect_list.append({'label':labels[first_value], 'weight':123})
 
         except FileNotFoundError:
             print(f"파일 '{file_path}'을(를) 찾을 수 없습니다.")
@@ -206,17 +206,88 @@ def analysis(req):
         # ProductAnalysis 모델 객체 생성 및 이미지 저장
         if not os.path.exists('product/detect'):
             os.makedirs('product/detect')
+            
+        
 
         product_analysis = ProductAnalysis()
         product_analysis.user = user
+        # product_analysis.result = 
+        
         product_analysis.save()  # 데이터베이스에 모델 객체 저장
-
+        print(detect_list)
+        for detect in detect_list:
+            product_analysis_results = ProductAnalysisResults()
+            product_analysis_results.productAnalysis = product_analysis
+            product_analysis_results.product = None
+            product_analysis_results.result = detect['label']
+            product_analysis_results.weight = detect['weight']
+            
+            product_analysis_results.save()
+        
         # BytesIO를 Django의 File 객체로 변환하여 ImageField에 저장
         product_analysis.image.save('image.png', image_io, save=True)
         
-        return JsonResponse({'response':product_analysis.id})
         
-    return JsonResponse({'response':True})
+        return JsonResponse({'status':"success",
+                            #  'detect_list': detect_list,
+                             })
+        
+    return JsonResponse({'status':"fail"})
+
+
+@csrf_exempt
+@require_http_methods(["POST"])
+@token_required
+def token_analysis_list(req):
+    user = req.user
+    # print(user)
+    data = json.loads(req.body)
+    is_reading = data.get('is_reading')
+    if is_reading: #is_reading이 true = 읽지 않은 내용만 반환
+        product_analysis = ProductAnalysis.objects.filter(user=user, is_reading=False)
+    else:   #is_reading이 false = 전체 내용 반환
+        product_analysis = ProductAnalysis.objects.filter(user=user)
+    response = {}
+    detect_list = []
+    for analysis in product_analysis:
+        print(analysis.image.path)
+        
+        analysis_results = ProductAnalysisResults.objects.filter(productAnalysis_id=analysis)
+        print(list(analysis_results))
+        results_list = []
+        for analysis_result in analysis_results:
+            results_list.append({'product_id': analysis_result.product_id,
+                                 'result': analysis_result.result,
+                                 'weight':analysis_result.weight})
+        detect_list.append({'image_url': analysis.id,
+                            'create_at': analysis.create_at,
+                            'is_reading': analysis.is_reading,
+                            'result': results_list,
+                            })
+        # detect_list.append({})
+    response['status'] = "success"
+    response['response'] = detect_list
+    return JsonResponse(  response  )
+@csrf_exempt
+@require_http_methods(["PATCH"])
+@token_required
+def read_update(req):
+    try:
+        data = json.loads(req.body)
+        id = data.get('image_url')
+        product_analysis = get_object_or_404(ProductAnalysis, pk=id)
+        print(product_analysis)
+        product_analysis.is_reading = not product_analysis.is_reading
+         # 변경 사항을 저장합니다.
+        product_analysis.save()
+        return JsonResponse({
+            'status':"success"
+        })
+    except Exception as e:
+        return JsonResponse({
+            'status':"fail",
+            "exception": e
+        })
 
 def get_image(req, image_url):
     # 이미지가 저장된 모델에서 해당 이미지의 인스턴스를 가져옵니다.
@@ -235,12 +306,8 @@ def get_image(req, image_url):
 
 @csrf_exempt
 @require_http_methods(["POST"])
-def selectProduct(request):
-    # print(1231213)
+def selectProduct(request):  ##상품명으로 가격 정보 조회
     if request.method == 'POST':
-        # print(1231213)
-        # data = json.loads(req.body)
-        # content = data.get('content')
         data = json.loads(request.body)
         
         name_to_search = data.get('product_name')

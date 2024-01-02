@@ -164,7 +164,7 @@ def analysis(req):
         
 
         results = model.predict(file_url,  save_txt=True)
-        os.remove(file_url)
+        # os.remove(file_url)
         res_plotted = results[0].plot()
         print('-'*30, results[0])
         labels = results[0].names

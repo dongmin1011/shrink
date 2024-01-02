@@ -111,8 +111,14 @@ def selectALL(req):
         # print("123", status_display)
         report['status'] = status_display
         report_image = ReportImage.objects.filter(report=report['id']).values('id')
-        print(list(report_image))
-        report['images'] = list(report_image)
+        # print(list(report_image))
+        report_image = list(report_image)
+        
+        if report_image:
+            report['thumbnail'] = report_image[0]['id']
+        else:
+            report['thumbnail'] = None
+        report['images'] = report_image
         result.append(report)
         
     # all_reports = list(all_reports)
@@ -182,8 +188,13 @@ def select(req):
         # print("123", status_display)
         report['status'] = status_display
         report_image = ReportImage.objects.filter(report=report['id']).values('id')
-        print(list(report_image))
-        report['images'] = list(report_image)
+        report_image = list(report_image)
+        
+        if report_image:
+            report['thumbnail'] = report_image[0]['id']
+        else:
+            report['thumbnail'] = None
+        report['images'] = report_image
         result.append(report)
         
     # reports_list = list(desired_product_reports)  # QuerySet을 리스트로 변환
@@ -226,8 +237,13 @@ def selectUser(req):
         # print("123", status_display)
         report['status'] = status_display
         report_image = ReportImage.objects.filter(report=report['id']).values('id')
-        print(list(report_image))
-        report['images'] = list(report_image)
+        report_image = list(report_image)
+        
+        if report_image:
+            report['thumbnail'] = report_image[0]['id']
+        else:
+            report['thumbnail'] = None
+        report['images'] = report_image
         result.append(report)
         
     # reports_list = list(desired_product_reports)  # QuerySet을 리스트로 변환

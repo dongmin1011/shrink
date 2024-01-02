@@ -155,6 +155,8 @@ def analysis(req):
         user = req.user
 
         image = req.FILES['image']
+        image.name = image.name.replace(' ','')
+        
         fs = FileSystemStorage()
         if not os.path.exists('product/file'):
             os.makedirs('product/file')
@@ -189,6 +191,8 @@ def analysis(req):
 
         except FileNotFoundError:
             print(f"파일 '{file_path}'을(를) 찾을 수 없습니다.")
+            return JsonResponse({'status':"fail"})
+            
         print(type(results[0]))
         image_data = np.array(res_plotted, dtype=np.uint8)
         # image = cv2.cvtColor(image_data, cv2.COLOR_RGB2BGR)  # 이미지 생성 (BGR 형식으로)
@@ -242,7 +246,7 @@ def token_analysis_list(req):
     user = req.user
     # print(user)
     data = json.loads(req.body)
-    is_reading = data.get('is_reading')
+    is_reading = data.get('is_reading',False)
     if is_reading: #is_reading이 true = 읽지 않은 내용만 반환
         product_analysis = ProductAnalysis.objects.filter(user=user, is_reading=False)
     else:   #is_reading이 false = 전체 내용 반환

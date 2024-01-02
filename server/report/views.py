@@ -90,6 +90,7 @@ def selectALL(req):
         
         report['user_id']=None
         report['user_name'] = user.nickname
+        report['profile_url'] = user.profile_url
         
         status_display = dict(Report.STATUS_CHOICES).get(report['status'])
         # print("123", status_display)
@@ -109,7 +110,9 @@ def select_detail(req, query_id):
         report = Report.objects.get(id=query_id)
         print(report)
         report_image = ReportImage.objects.filter(report=report.id).values('id')
-
+        print(report.user_id)
+        user = User.objects.get(id=report.user_id)
+        # print(user.id)
         report_values = {
             "id": report.id,
             "product_name": report.product_name,
@@ -119,13 +122,15 @@ def select_detail(req, query_id):
             "content": report.content,
             "status": report.status,
             "user_name": report.user.nickname,
+            'profile_url' : user.profile_url,
             "images": list(report_image)
         }
         return JsonResponse({
             'status':'success',
             'response':report_values
         })
-    except :
+    except Exception as e:
+        print(e)
         return JsonResponse({
             'status':'fail',
             'response': None
@@ -146,7 +151,8 @@ def select(req):
         
         report['user_id']=None
         report['user_name'] = user.nickname
-        
+        report['profile_url'] = user.profile_url
+
         
         status_display = dict(Report.STATUS_CHOICES).get(report['status'])
         # print("123", status_display)
@@ -182,7 +188,8 @@ def selectUser(req):
         
         report['user_id']=None
         report['user_name'] = user.nickname
-        
+        report['profile_url'] = user.profile_url
+
         
         status_display = dict(Report.STATUS_CHOICES).get(report['status'])
         # print("123", status_display)

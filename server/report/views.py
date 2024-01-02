@@ -169,7 +169,6 @@ def select_detail(req, query_id):
             'response': None
         })
 
-
 # 신고 좋아요
 @require_http_methods(["POST"])
 @csrf_exempt

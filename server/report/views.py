@@ -83,7 +83,7 @@ def get_image(req, image_url):
 ## 신고된 제품 전체 출력
 def selectALL(req):
     # Report 모델의 모든 객체 조회
-    all_reports = Report.objects.all().values()
+    all_reports = Report.objects.all().order_by('-created_at').values()
     for report in all_reports:
         user = User.objects.get(id=report['user_id'])
         print(user)
@@ -143,7 +143,7 @@ def select(req):
     data = json.loads(req.body)
     product = data.get('product')
     
-    desired_product_reports = Report.objects.filter(product_name__icontains=product).values( )
+    desired_product_reports = Report.objects.filter(product_name__icontains=product).order_by('-created_at').values()
     for report in desired_product_reports:
         
         user = User.objects.get(id=report['user_id'])
@@ -180,7 +180,7 @@ def selectUser(req):
             'status': 'fail',
             'message':'사용자 정보 없음'
         })
-    desired_product_reports = Report.objects.filter(user=existing_user).values()
+    desired_product_reports = Report.objects.filter(user=existing_user).order_by('-created_at').values()
     for report in desired_product_reports:
         
         user = User.objects.get(id=report['user_id'])

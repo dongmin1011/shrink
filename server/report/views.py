@@ -11,10 +11,11 @@ from user_auth.decorators import token_required
 from django.core.files.storage import FileSystemStorage
 from django.core.files import File
 from django.core.paginator import Paginator
+from django.db.models import Count
 
 
 
-from .models import Report, ReportImage
+from .models import Like, Report, ReportImage
 from django.utils import timezone
 
 
@@ -37,7 +38,7 @@ def write_report(req):
     weight = json_data.get('weight')
     price = int(json_data.get('price'))
     content = json_data.get('content')
-
+    unit = json_data.get('unit')
         
     
     
@@ -49,6 +50,7 @@ def write_report(req):
         product_name=product,
         weight = weight,
         content = content,
+        unit = unit,
         status = 1,
         
     )
@@ -134,6 +136,11 @@ def select_detail(req, query_id):
         report_image = ReportImage.objects.filter(report=report.id).values('id')
         print(report.user_id)
         user = User.objects.get(id=report.user_id)
+        
+        like_count = Like.objects.filter(report=report).count()  ##report의 좋아요 개수 가지고 오기
+        print(like_count)
+        
+        # report.annotate(like_count=Count('like'))
         # print(user.id)
         report_values = {
             "id": report.id,

@@ -12,6 +12,7 @@ urlpatterns = [
     path('select/detail/<int:query_id>', views.select_detail),
     path('update/<int:query_id>', views.update_report),
     path('like/<int:query_id>', views.like_report),
+     path('likeall', views.user_like_all),
     
     
     path('is_like/<int:query_id>', views.is_like),          #로그인 유저가 좋아요를 눌렀는지 확인

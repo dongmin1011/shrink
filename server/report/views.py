@@ -146,8 +146,6 @@ def is_like(req, query_id):
         return JsonResponse({"status":"success", "response":False})
     
 
-    # return JsonResponse({'response':user.nickname})
-
 #로그인한 사용자가 작성한 게시물인지 확인
 @token_required
 def is_your_report(req, query_id):
@@ -158,7 +156,28 @@ def is_your_report(req, query_id):
         return JsonResponse({"status":"success", "response":True})
     else:
         return JsonResponse({"status":"success", "response":False})
-    
+
+#로그인한 사용자가 좋아요를 누른 모든 게시물 반환
+@token_required
+def user_like_all(req):
+    user= req.user
+    user_like_list=[]
+    try:
+        reports = Report.objects.all()
+        
+        for report in reports:
+            print(report.id)
+            try:
+                likes = Like.objects.get(user=user, report=report)
+                print(likes)
+                user_like_list.append(report.id)
+                print(user_like_list)
+            except:
+                continue
+        return JsonResponse({"status":'success', "like_list":user_like_list})
+    except:
+        return JsonResponse({"status":'fail', "response":False})
+
 #신고내역 상세 페이지
 def select_detail(req, query_id):
     try:

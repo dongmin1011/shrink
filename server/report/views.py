@@ -56,10 +56,11 @@ def write_report(req):
         
     )
     # file_urls = []
-    
+    print("--", uploaded_images)
     for image in uploaded_images:
             # 이미지를 메모리에 로드
         img = Image.open(image)
+        print(img)
         
         # 이미지 리사이징
         resized_img = img.resize((640, 640))  # new_width, new_height에 원하는 크기를 설정하세요
@@ -71,10 +72,10 @@ def write_report(req):
         # 저장된 이미지를 ReportImage에 저장
         report_image = ReportImage(report=report)
         report_image.image.save('image.jpg', File(buffer), save=True)
-        return JsonResponse({
-            "status": "success",
-            "message": "신고가 접수되었습니다."
-        }, status=200)
+    return JsonResponse({
+        "status": "success",
+        "message": "신고가 접수되었습니다."
+    }, status=200)
 
 def get_image(req, image_url):
     # 이미지가 저장된 모델에서 해당 이미지의 인스턴스를 가져옵니다.

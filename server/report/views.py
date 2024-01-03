@@ -144,7 +144,7 @@ def is_like(req, query_id):
         print(likes)
         return JsonResponse({"status":"success", "response":True})
     except:
-        return JsonResponse({"status":"fail", "response":False})
+        return JsonResponse({"status":"success", "response":False})
     
     
     

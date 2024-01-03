@@ -63,7 +63,7 @@ def write_report(req):
         print(img)
         
         # 이미지 리사이징
-        resized_img = img.resize((720, 640))  # new_width, new_height에 원하는 크기를 설정하세요
+        resized_img = img.resize((640, 720))  # new_width, new_height에 원하는 크기를 설정하세요
         
         # JPEG로 변환하여 품질 조절
         buffer = BytesIO()

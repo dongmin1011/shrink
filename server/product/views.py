@@ -25,7 +25,7 @@ from ultralytics import YOLO
 
 
 load_dotenv()
-model = YOLO("yolov8n.pt")  # load a pretrained model (recommended for training)
+model = YOLO("besttt 1.pt")  # load a pretrained model (recommended for training)
 
 def index(req):
     if req.method == "GET":
@@ -144,6 +144,14 @@ def select (req):
     }
 
     return JsonResponse(productResult)
+
+
+def search_product(req):
+    product = req.GET.get('search', "")
+    print(product)
+    products = list(Product.objects.filter(product_name__contains = product).values('product_id','product_name'))
+    
+    return JsonResponse({'status':"success", "response":products})
 
 @csrf_exempt
 @require_http_methods(["POST"])

@@ -67,7 +67,7 @@ def write_report(req):
         
         # JPEG로 변환하여 품질 조절
         buffer = BytesIO()
-        img.save(buffer, format='JPEG', quality=60)  # quality를 조절하여 압축 수준을 설정하세요
+        img.save(buffer, format='png', quality=60)  # quality를 조절하여 압축 수준을 설정하세요
         
         # 저장된 이미지를 ReportImage에 저장
         report_image = ReportImage(report=report)

@@ -142,9 +142,9 @@ def is_like(req, query_id):
     try:
         likes = Like.objects.get(user=user, report=report)
         print(likes)
-        return JsonResponse({"status":"success"})
+        return JsonResponse({"status":"success", "response":True})
     except:
-        return JsonResponse({"status":"fail"})
+        return JsonResponse({"status":"fail", "response":False})
     
     
     

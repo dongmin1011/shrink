@@ -14,6 +14,9 @@ urlpatterns = [
     path('like/<int:query_id>', views.like_report),
     
     
+    path('is_like/<int:query_id>', views.is_like),
+    
+    
     
     path('select/image/<str:image_url>', views.get_image),
 ]

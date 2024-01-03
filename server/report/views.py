@@ -86,7 +86,8 @@ def get_image(req, image_url):
 
 ## 신고된 제품 전체 출력
 def selectALL(req):
-    
+    user = req.user if req.user else None
+    print(user)
     
     # Report 모델의 모든 객체 조회
     all_reports = Report.objects.all().order_by('-created_at').values()
@@ -132,6 +133,24 @@ def selectALL(req):
         'status':'success',
         'response':result
     })
+
+@token_required
+def is_like(req, query_id):
+    user = req.user
+    report =  get_object_or_404(Report, pk=query_id)
+    print(report)
+    try:
+        likes = Like.objects.get(user=user, report=report)
+        print(likes)
+        return JsonResponse({"status":"success"})
+    except:
+        return JsonResponse({"status":"fail"})
+    
+    
+    
+    
+    # return JsonResponse({'response':user.nickname})
+
 def select_detail(req, query_id):
     try:
         report = Report.objects.get(id=query_id)

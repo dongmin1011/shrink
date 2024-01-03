@@ -27,6 +27,7 @@ from ultralytics import YOLO
 load_dotenv()
 model = YOLO("yolov8n.pt")  # load a pretrained model (recommended for training)
 
+
 def index(req):
     if req.method == "GET":
         return JsonResponse({

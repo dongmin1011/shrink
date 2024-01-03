@@ -16,6 +16,8 @@ from django.db.models import Count
 
 from .models import Like, Report, ReportImage
 from django.utils import timezone
+from PIL import Image
+from io import BytesIO
 
 
 @csrf_exempt
@@ -56,13 +58,23 @@ def write_report(req):
     # file_urls = []
     
     for image in uploaded_images:
-        report_images = ReportImage(report=report)
-        report_images.image.save('image.png', File(image), save=True)
-
-    return JsonResponse({
-        "status": "success",
-        "message": "신고가 접수되었습니다."
-    }, status=200)
+            # 이미지를 메모리에 로드
+        img = Image.open(image)
+        
+        # 이미지 리사이징
+        resized_img = img.resize((640, 640))  # new_width, new_height에 원하는 크기를 설정하세요
+        
+        # JPEG로 변환하여 품질 조절
+        buffer = BytesIO()
+        resized_img.save(buffer, format='JPEG', quality=60)  # quality를 조절하여 압축 수준을 설정하세요
+        
+        # 저장된 이미지를 ReportImage에 저장
+        report_image = ReportImage(report=report)
+        report_image.image.save('image.jpg', File(buffer), save=True)
+        return JsonResponse({
+            "status": "success",
+            "message": "신고가 접수되었습니다."
+        }, status=200)
 
 def get_image(req, image_url):
     # 이미지가 저장된 모델에서 해당 이미지의 인스턴스를 가져옵니다.

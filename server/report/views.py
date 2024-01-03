@@ -63,31 +63,31 @@ def write_report(req):
         print(img)
         
         # Exif 데이터 확인
-    exif = dict(img._getexif().items()) if hasattr(img, "_getexif") else None
+        exif = dict(img._getexif().items()) if hasattr(img, "_getexif") else None
 
-    # 이미지 회전 확인 및 회전
-    if exif:
-        for orientation in ExifTags.TAGS.keys():
-            if ExifTags.TAGS[orientation] == 'Orientation':
-                break
+        # 이미지 회전 확인 및 회전
+        if exif:
+            for orientation in ExifTags.TAGS.keys():
+                if ExifTags.TAGS[orientation] == 'Orientation':
+                    break
 
-        if exif.get(orientation) == 3:
-            img = img.rotate(180, expand=True)
-        elif exif.get(orientation) == 6:
-            img = img.rotate(270, expand=True)
-        elif exif.get(orientation) == 8:
-            img = img.rotate(90, expand=True)
+            if exif.get(orientation) == 3:
+                img = img.rotate(180, expand=True)
+            elif exif.get(orientation) == 6:
+                img = img.rotate(270, expand=True)
+            elif exif.get(orientation) == 8:
+                img = img.rotate(90, expand=True)
 
-    # 이미지 리사이징
-    resized_img = img.resize((640, 640))
+        # 이미지 리사이징
+        resized_img = img.resize((640, 640))
 
-    # JPEG로 변환하여 품질 조절
-    buffer = BytesIO()
-    resized_img.save(buffer, format='png', quality=60)
+        # JPEG로 변환하여 품질 조절
+        buffer = BytesIO()
+        resized_img.save(buffer, format='png', quality=60)
 
-    # 저장된 이미지를 ReportImage에 저장
-    report_image = ReportImage(report=report)
-    report_image.image.save('image.jpg', File(buffer), save=True)
+        # 저장된 이미지를 ReportImage에 저장
+        report_image = ReportImage(report=report)
+        report_image.image.save('image.jpg', File(buffer), save=True)
     return JsonResponse({
         "status": "success",
         "message": "신고가 접수되었습니다."

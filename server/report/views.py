@@ -63,15 +63,15 @@ def write_report(req):
         print(img)
         
         # 이미지 리사이징
-        # resized_img = img.resize((640, 720))  # new_width, new_height에 원하는 크기를 설정하세요
+        resized_img = img.resize((640, 720))  # new_width, new_height에 원하는 크기를 설정하세요
         
         # JPEG로 변환하여 품질 조절
-        buffer = BytesIO()
-        img.save(buffer, format='png', quality=60)  # quality를 조절하여 압축 수준을 설정하세요
+        # buffer = BytesIO()
+        # resized_img.save(buffer, format='png', quality=60)  # quality를 조절하여 압축 수준을 설정하세요
         
         # 저장된 이미지를 ReportImage에 저장
-        report_image = ReportImage(report=report)
-        report_image.image.save('image.jpg', File(buffer), save=True)
+        new_img = ReportImage(report=report)
+        new_img.image.save('image.jpg', resized_img, save=True)
     return JsonResponse({
         "status": "success",
         "message": "신고가 접수되었습니다."

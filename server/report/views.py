@@ -244,6 +244,8 @@ def select(req):
         
         user = User.objects.get(id=report['user_id'])
         print(user)
+        like_count = Like.objects.filter(report=report['id']).count()  ##report의 좋아요 개수 가지고 오기
+
         
         report['user_id']=None
         report['user_name'] = user.nickname
@@ -255,6 +257,8 @@ def select(req):
         report['status'] = status_display
         report_image = ReportImage.objects.filter(report=report['id']).values('id')
         report_image = list(report_image)
+        report['like'] = like_count
+
         
         if report_image:
             report['thumbnail'] = report_image[0]['id']
@@ -293,6 +297,8 @@ def selectUser(req):
         
         user = User.objects.get(id=report['user_id'])
         print(user)
+        like_count = Like.objects.filter(report=report['id']).count()  ##report의 좋아요 개수 가지고 오기
+
         
         report['user_id']=None
         report['user_name'] = user.nickname
@@ -304,7 +310,8 @@ def selectUser(req):
         report['status'] = status_display
         report_image = ReportImage.objects.filter(report=report['id']).values('id')
         report_image = list(report_image)
-        
+        report['like'] = like_count
+
         if report_image:
             report['thumbnail'] = report_image[0]['id']
         else:

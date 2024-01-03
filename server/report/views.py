@@ -14,7 +14,6 @@ from django.core.paginator import Paginator
 from django.db.models import Count
 
 
-
 from .models import Like, Report, ReportImage
 from django.utils import timezone
 
@@ -133,7 +132,7 @@ def selectALL(req):
         'status':'success',
         'response':result
     })
-
+#로그인한 사용자가 좋아요를 눌렀는지 확인
 @token_required
 def is_like(req, query_id):
     user = req.user
@@ -146,11 +145,21 @@ def is_like(req, query_id):
     except:
         return JsonResponse({"status":"success", "response":False})
     
-    
-    
-    
+
     # return JsonResponse({'response':user.nickname})
 
+#로그인한 사용자가 작성한 게시물인지 확인
+@token_required
+def is_your_report(req, query_id):
+    user = req.user
+    report =  get_object_or_404(Report, pk=query_id)
+    
+    if report.user == user:
+        return JsonResponse({"status":"success", "response":True})
+    else:
+        return JsonResponse({"status":"success", "response":False})
+    
+#신고내역 상세 페이지
 def select_detail(req, query_id):
     try:
         report = Report.objects.get(id=query_id)

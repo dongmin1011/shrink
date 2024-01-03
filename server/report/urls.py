@@ -14,7 +14,8 @@ urlpatterns = [
     path('like/<int:query_id>', views.like_report),
     
     
-    path('is_like/<int:query_id>', views.is_like),
+    path('is_like/<int:query_id>', views.is_like),          #로그인 유저가 좋아요를 눌렀는지 확인
+    path('is_report/<int:query_id>', views.is_your_report), #로그인 유저의 게시물인지 확인
     
     
     

@@ -192,20 +192,27 @@ def user_like_all(req):
     user= req.user
     user_like_list=[]
     try:
-        reports = Report.objects.all()
+        # reports = Report.objects.all()
+        # print(user)
+        # print(Like.objects.all().values('user'))
+        likes = Like.objects.filter(user=user)
+        # print(likes)
+        for like in likes:
+            # print(like)
+            user_like_list.append(like.report.id)
         
-        for report in reports:
-            print(report.id)
-            try:
-                likes = Like.objects.get(user=user, report=report)
-                print(likes)
-                user_like_list.append(report.id)
-                print(user_like_list)
-            except:
-                continue
+        # for report in reports:
+        #     print(report.id)
+        #     try:
+        #         likes = Like.objects.get(user=user, report=report)
+        #         print(likes)
+        #         user_like_list.append(report.id)
+        #         print(user_like_list)
+        #     except:
+        #         continue
         return JsonResponse({"status":'success', "like_list":user_like_list})
     except:
-        return JsonResponse({"status":'fail', "response":False})
+        return JsonResponse({"status":'fail', "response":False, "message":"좋아요 리스트가 없습니다."})
 
 #신고내역 상세 페이지
 def select_detail(req, query_id):

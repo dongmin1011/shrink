@@ -103,6 +103,9 @@ DATABASES = {
         'PASSWORD': os.getenv('AWS_RDS_MYSQL_PASSWORD'),
         'HOST': os.getenv('AWS_RDS_MYSQL_HOST'),
         'PORT': '3306',
+        'OPTIONS': {
+            'init_command': "SET time_zone='+09:00'",
+        },
     },
     'mongodb': {
         'ENGINE': 'djongo',
@@ -154,8 +157,9 @@ TIME_ZONE = "Asia/Seoul"
 
 USE_I18N = True
 
-# Local 서버 시간을 사용해 DB에 저장하기 위해 False로 변경(한국시간) 23.12.27 yujin
-USE_TZ = False
+# (24.01.02 사용안함)Local 서버 시간을 사용해 DB에 저장하기 위해 False로 변경(한국시간) 23.12.27 yujin
+# UTC 시간대 사용
+USE_TZ = True
 
 STATIC_URL = "static/"
 

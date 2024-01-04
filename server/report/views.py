@@ -67,6 +67,8 @@ def write_report(req):
         # if img.mode == 'RGBA':
         #     img = img.convert('RGB')
         # 이미지 형식이 jpg일 때만 EXIF 데이터 확인
+        print(img.format)
+        print(img.getexif)
         if img.format == 'JPEG'  and hasattr(img, '_getexif'):
             exif = img._getexif()
             print("jpg"*10)
@@ -95,6 +97,39 @@ def write_report(req):
             # 저장된 이미지를 ReportImage에 저장
             report_image = ReportImage(report=report)
             report_image.image.save('image.jpg', File(buffer), save=True)
+        # elif img.format == 'MPO':
+            
+        #     selected_frame = img.copy()  # 선택한 프레임 복사
+            
+        #     selected_frame = Image.Image._new(selected_frame)
+
+            
+        #     exif = selected_frame._getexif()
+        #     if exif is not None:
+        #         exif = dict(exif)
+        #         orientation_key = [key for key, value in ExifTags.TAGS.items() if value == 'Orientation']
+        #         orientation = exif.get(orientation_key[0], None) if orientation_key else None
+
+        #         # 이미지 회전에 따른 resize 작업
+        #         if orientation in [3, 6, 8]:
+        #             # 회전된 경우, 먼저 이미지를 회전시킨 후 resize
+        #             if orientation == 3:
+        #                 selected_frame = selected_frame.rotate(180, expand=True)
+        #             elif orientation == 6:
+        #                 selected_frame = selected_frame.rotate(270, expand=True)
+        #             elif orientation == 8:
+        #                 selected_frame = selected_frame.rotate(90, expand=True)
+        #         width, height = img.size
+        #         # 이미지 리사이징
+        #         resized_img = img.resize((width//2, height//2))
+
+                
+        #         buffer = BytesIO()
+        #         resized_img.save(buffer, format='png', quality=60)
+
+        #         # 저장된 이미지를 ReportImage에 저장
+        #         report_image = ReportImage(report=report)
+        #         report_image.image.save('image.png', File(buffer), save=True)
         else:
             width, height = img.size
             # 이미지 리사이징
@@ -107,6 +142,7 @@ def write_report(req):
             # 저장된 이미지를 ReportImage에 저장
             report_image = ReportImage(report=report)
             report_image.image.save('image.png', File(buffer), save=True)
+        print(report_image.image.path)
     return JsonResponse({
         "status": "success",
         "message": "신고가 접수되었습니다."

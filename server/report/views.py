@@ -78,18 +78,30 @@ def write_report(req):
                     img = img.rotate(270, expand=True)
                 elif orientation == 8:
                     img = img.rotate(90, expand=True)
+                    
+            width, height = img.size
+            # 이미지 리사이징
+            resized_img = img.resize((width//2, height//2))
 
-        width, height = img.size
-        # 이미지 리사이징
-        resized_img = img.resize((width//2, height//2))
+            
+            buffer = BytesIO()
+            resized_img.save(buffer, format='JPEG', quality=60)
 
-        # JPEG로 변환하여 품질 조절
-        buffer = BytesIO()
-        resized_img.save(buffer, format='png', quality=60)
+            # 저장된 이미지를 ReportImage에 저장
+            report_image = ReportImage(report=report)
+            report_image.image.save('image.jpg', File(buffer), save=True)
+        else:
+            width, height = img.size
+            # 이미지 리사이징
+            resized_img = img.resize((width//2, height//2))
 
-        # 저장된 이미지를 ReportImage에 저장
-        report_image = ReportImage(report=report)
-        report_image.image.save('image.png', File(buffer), save=True)
+            
+            buffer = BytesIO()
+            resized_img.save(buffer, format='png', quality=60)
+
+            # 저장된 이미지를 ReportImage에 저장
+            report_image = ReportImage(report=report)
+            report_image.image.save('image.png', File(buffer), save=True)
     return JsonResponse({
         "status": "success",
         "message": "신고가 접수되었습니다."

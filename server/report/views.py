@@ -66,8 +66,9 @@ def write_report(req):
         print(img)
         
         # 이미지 형식이 jpg일 때만 EXIF 데이터 확인
-        if img.format == 'JPEG' and hasattr(img, '_getexif'):
+        if img.format == 'JPEG'  and hasattr(img, '_getexif'):
             exif = img._getexif()
+            print("jpg"*10)
 
             if exif is not None:
                 exif = dict(exif)

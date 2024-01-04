@@ -20,6 +20,9 @@ from PIL import Image, ExifTags
 from io import BytesIO
 
 
+def image_return_url(url):
+    return "https://api.dietshrink.kro.kr/api/report/select/image/"+url
+
 @csrf_exempt
 @require_http_methods(["POST"])
 @token_required
@@ -161,7 +164,7 @@ def selectALL(req):
         # print(list(report_image))
         report_image = list(report_image)
         for i in range(len(report_image)):
-            report_image[i]['id'] = "https://api.dietshrink.kro.kr/api/report/select/image/"+str(report_image[i]['id'])
+            report_image[i]['id'] = image_return_url(str(report_image[i]['id']))
             
         report['like'] = like_count
         
@@ -249,7 +252,7 @@ def select_detail(req, query_id):
         # report['status'] = status_display
         report_image = list(report_image)
         for i in range(len(report_image)):
-            report_image[i]['id'] = "https://api.dietshrink.kro.kr/api/report/select/image/"+str(report_image[i]['id'])
+            report_image[i]['id'] = image_return_url(str(report_image[i]['id']))
         report_values = {
             "id": report.id,
             "product_name": report.product_name,
@@ -342,7 +345,7 @@ def select(req):
         report_image = list(report_image)
         report['like'] = like_count
         for i in range(len(report_image)):
-            report_image[i]['id'] = "https://api.dietshrink.kro.kr/api/report/select/image/"+str(report_image[i]['id'])
+            report_image[i]['id'] = image_return_url(str(report_image[i]['id']))
         
         if report_image:
             report['thumbnail'] = report_image[0]['id']
@@ -397,7 +400,7 @@ def selectUser(req):
         report['like'] = like_count
         
         for i in range(len(report_image)):
-            report_image[i]['id'] = "https://api.dietshrink.kro.kr/api/report/select/image/"+str(report_image[i]['id'])
+            report_image[i]['id'] = image_return_url(str(report_image[i]['id']))
         if report_image:
             report['thumbnail'] = report_image[0]['id']
         else:

@@ -64,9 +64,10 @@ def write_report(req):
             # 이미지를 메모리에 로드
         img = Image.open(image)
         print(img)
-        
+        # if img.mode == 'RGBA':
+        #     img = img.convert('RGB')
         # 이미지 형식이 jpg일 때만 EXIF 데이터 확인
-        if hasattr(img, '_getexif'):
+        if img.format == 'JPEG'  and hasattr(img, '_getexif'):
             exif = img._getexif()
             print("jpg"*10)
 

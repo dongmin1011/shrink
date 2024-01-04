@@ -66,34 +66,49 @@ def write_report(req):
         print(img)
         
         # 이미지 형식이 jpg일 때만 EXIF 데이터 확인
-        if img.format == 'JPEG'  and hasattr(img, '_getexif'):
-            exif = img._getexif()
-            print("jpg"*10)
+        if img.format == 'JPEG':
+            try:
+                # 이미지의 EXIF 데이터 확인 및 회전
+                exif = img._getexif()
+                if exif is not None:
+                    exif = dict(exif)
+                    orientation_key = [key for key, value in exif.items() if value == 'Orientation']
+                    orientation = exif.get(orientation_key[0], None) if orientation_key else None
 
-            if exif is not None:
-                exif = dict(exif)
-                orientation_key = [key for key, value in ExifTags.TAGS.items() if value == 'Orientation']
-                orientation = exif.get(orientation_key[0], None) if orientation_key else None
+                    # 이미지 회전
+                    if orientation == 3:
+                        img = img.rotate(180, expand=True)
+                    elif orientation == 6:
+                        img = img.rotate(270, expand=True)
+                    elif orientation == 8:
+                        img = img.rotate(90, expand=True)
+                        
+                    width, height = img.size
+                    # 이미지 리사이징
+                    resized_img = img.resize((width//2, height//2))
 
-                # 이미지 회전
-                if orientation == 3:
-                    img = img.rotate(180, expand=True)
-                elif orientation == 6:
-                    img = img.rotate(270, expand=True)
-                elif orientation == 8:
-                    img = img.rotate(90, expand=True)
                     
-            width, height = img.size
-            # 이미지 리사이징
-            resized_img = img.resize((width//2, height//2))
+                    buffer = BytesIO()
+                    resized_img.save(buffer, format='JPEG', quality=60)
 
-            
-            buffer = BytesIO()
-            resized_img.save(buffer, format='JPEG', quality=60)
+                    # 저장된 이미지를 ReportImage에 저장
+                    report_image = ReportImage(report=report)
+                    report_image.image.save('image.jpg', File(buffer), save=True)
+            except (AttributeError, KeyError, IndexError):
+                # 이미지가 손상되었거나 EXIF 데이터가 없는 경우
+                print("except")
+                width, height = img.size
+                # 이미지 리사이징
+                resized_img = img.resize((width//2, height//2))
 
-            # 저장된 이미지를 ReportImage에 저장
-            report_image = ReportImage(report=report)
-            report_image.image.save('image.jpg', File(buffer), save=True)
+                
+                buffer = BytesIO()
+                resized_img.save(buffer, format='JPEG', quality=60)
+
+                # 저장된 이미지를 ReportImage에 저장
+                report_image = ReportImage(report=report)
+                report_image.image.save('image.jpg', File(buffer), save=True)
+                pass
         else:
             width, height = img.size
             # 이미지 리사이징
@@ -106,6 +121,9 @@ def write_report(req):
             # 저장된 이미지를 ReportImage에 저장
             report_image = ReportImage(report=report)
             report_image.image.save('image.png', File(buffer), save=True)
+            
+    
+            
     return JsonResponse({
         "status": "success",
         "message": "신고가 접수되었습니다."

@@ -157,6 +157,12 @@ def search_product(req):
     
     return JsonResponse({'status':"success", "response":products})
 
+def selectall(req):
+    products = list(Product.objects.all().values())
+    
+    
+    return JsonResponse({'status':"success", "response":products})
+
 @csrf_exempt
 @require_http_methods(["POST"])
 @token_required

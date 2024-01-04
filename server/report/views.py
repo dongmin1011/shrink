@@ -160,6 +160,9 @@ def selectALL(req):
         report_image = ReportImage.objects.filter(report=report['id']).values('id')
         # print(list(report_image))
         report_image = list(report_image)
+        for i in range(len(report_image)):
+            report_image[i]['id'] = "https://api.dietshrink.kro.kr/api/report/select/image/"+str(report_image[i]['id'])
+            
         report['like'] = like_count
         
         if report_image:
@@ -244,7 +247,9 @@ def select_detail(req, query_id):
         status_display = dict(Report.STATUS_CHOICES).get(report.status)
 
         # report['status'] = status_display
-        
+        report_image = list(report_image)
+        for i in range(len(report_image)):
+            report_image[i]['id'] = "https://api.dietshrink.kro.kr/api/report/select/image/"+str(report_image[i]['id'])
         report_values = {
             "id": report.id,
             "product_name": report.product_name,
@@ -336,7 +341,8 @@ def select(req):
         report_image = ReportImage.objects.filter(report=report['id']).values('id')
         report_image = list(report_image)
         report['like'] = like_count
-
+        for i in range(len(report_image)):
+            report_image[i]['id'] = "https://api.dietshrink.kro.kr/api/report/select/image/"+str(report_image[i]['id'])
         
         if report_image:
             report['thumbnail'] = report_image[0]['id']
@@ -389,7 +395,9 @@ def selectUser(req):
         report_image = ReportImage.objects.filter(report=report['id']).values('id')
         report_image = list(report_image)
         report['like'] = like_count
-
+        
+        for i in range(len(report_image)):
+            report_image[i]['id'] = "https://api.dietshrink.kro.kr/api/report/select/image/"+str(report_image[i]['id'])
         if report_image:
             report['thumbnail'] = report_image[0]['id']
         else:
@@ -482,8 +490,50 @@ def update_report(req, query_id):
             report.reportimage_set.all().delete()  # 기존 이미지 삭제
 
             for image in update_images:
-                new_report_image = ReportImage(report=report)
-                new_report_image.image.save('image.png', image, save=True)
+            # 이미지를 메모리에 로드
+                img = Image.open(image)
+                print(img)
+                
+                # 이미지 형식이 jpg일 때만 EXIF 데이터 확인
+                if img.format == 'JPEG' and hasattr(img, '_getexif'):
+                    exif = img._getexif()
+
+                    if exif is not None:
+                        exif = dict(exif)
+                        orientation_key = [key for key, value in ExifTags.TAGS.items() if value == 'Orientation']
+                        orientation = exif.get(orientation_key[0], None) if orientation_key else None
+
+                        # 이미지 회전
+                        if orientation == 3:
+                            img = img.rotate(180, expand=True)
+                        elif orientation == 6:
+                            img = img.rotate(270, expand=True)
+                        elif orientation == 8:
+                            img = img.rotate(90, expand=True)
+                            
+                    width, height = img.size
+                    # 이미지 리사이징
+                    resized_img = img.resize((width//2, height//2))
+
+                    
+                    buffer = BytesIO()
+                    resized_img.save(buffer, format='JPEG', quality=60)
+
+                    # 저장된 이미지를 ReportImage에 저장
+                    report_image = ReportImage(report=report)
+                    report_image.image.save('image.jpg', File(buffer), save=True)
+                else:
+                    width, height = img.size
+                    # 이미지 리사이징
+                    resized_img = img.resize((width//2, height//2))
+
+                    
+                    buffer = BytesIO()
+                    resized_img.save(buffer, format='png', quality=60)
+
+                    # 저장된 이미지를 ReportImage에 저장
+                    report_image = ReportImage(report=report)
+                    report_image.image.save('image.png', File(buffer), save=True)
 
         report.save()  # 변경된 필드들 저장
 

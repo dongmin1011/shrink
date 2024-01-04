@@ -191,88 +191,90 @@ def analysis(req):
     
     if req.method =='POST' and req.FILES['image']:        
         user = req.user
-
-        image = req.FILES['image']
-        image.name = image.name.replace(' ','')
-        
-        fs = FileSystemStorage()
-        if not os.path.exists('product/file'):
-            os.makedirs('product/file')
-        filename = fs.save('product/file/'+image.name, image)
-        file_url = fs.url(filename)
-        file_url = '.'+file_url
-        
-
-        results = model.predict(file_url,  save_txt=True)
-        # os.remove(file_url)
-        res_plotted = results[0].plot()
-        print('-'*30, results[0])
-        labels = results[0].names
-        file_path = results[0].path
-        save_dir = results[0].save_dir
-        file_path = file_path.split('/')[-1].split('.')[0]+'.txt'#aws개발 환경
-        file_path = save_dir+'/labels/'+file_path             #aws개발 환경
-        # file_path = file_path.split('\\')[-1].split('.')[0]+'.txt'#로컬개발 환경
-        # file_path = os.path.join(save_dir, 'labels', file_path) #로컬개발 환경
-        print(file_path)
-        file_path = file_path.replace('\\','/')
-        print(file_path)
-         
-        detect_list = []
         try:
-            with open(file_path, 'r') as file:
-                for line in file:
-                    # 공백을 기준으로 분할하여 첫 번째 값 가져오기
-                    first_value = int(line.split()[0])
-                    print(labels[first_value])  # 각 행의 첫 번째 값 출력
-                    detect_list.append({'label':labels[first_value], 'weight':123})
-
-        except FileNotFoundError:
-            print(f"파일 '{file_path}'을(를) 찾을 수 없습니다.")
-            return JsonResponse({'status':"fail"})
+            image = req.FILES['image']
+            image.name = image.name.replace(' ','')
             
-        print(type(results[0]))
-        image_data = np.array(res_plotted, dtype=np.uint8)
-        # image = cv2.cvtColor(image_data, cv2.COLOR_RGB2BGR)  # 이미지 생성 (BGR 형식으로)
-        # print(image_data)
-        
-        # image_data를 OpenCV로 다루고 PIL Image 객체로 변환 (RGB 형식)
-        img = cv2.cvtColor(image_data, cv2.COLOR_BGR2RGB)
-        img_pil = Image.fromarray(img.astype('uint8'))
-
-        # BytesIO에 이미지 저장
-        image_io = BytesIO()
-        img_pil.save(image_io, format='PNG')  # 이미지를 원하는 형식으로 저장(PNG, JPEG 등)
-        image_io.seek(0)  # BytesIO의 파일 포인터를 처음으로 이동
-
-        # ProductAnalysis 모델 객체 생성 및 이미지 저장
-        if not os.path.exists('product/detect'):
-            os.makedirs('product/detect')
+            fs = FileSystemStorage()
+            if not os.path.exists('product/file'):
+                os.makedirs('product/file')
+            filename = fs.save('product/file/'+image.name, image)
+            file_url = fs.url(filename)
+            file_url = '.'+file_url
             
-        
 
-        product_analysis = ProductAnalysis()
-        product_analysis.user = user
-        # product_analysis.result = 
-        
-        product_analysis.save()  # 데이터베이스에 모델 객체 저장
-        print(detect_list)
-        for detect in detect_list:
-            product_analysis_results = ProductAnalysisResults()
-            product_analysis_results.productAnalysis = product_analysis
-            product_analysis_results.product = None
-            product_analysis_results.result = detect['label']
-            product_analysis_results.weight = detect['weight']
+            results = model.predict(file_url,  save_txt=True)
+            # os.remove(file_url)
+            res_plotted = results[0].plot()
+            print('-'*30, results[0])
+            labels = results[0].names
+            file_path = results[0].path
+            save_dir = results[0].save_dir
+            # file_path = file_path.split('/')[-1].split('.')[0]+'.txt'#aws개발 환경
+            # file_path = save_dir+'/labels/'+file_path             #aws개발 환경
+            file_path = file_path.split('\\')[-1].split('.')[0]+'.txt'#로컬개발 환경
+            file_path = os.path.join(save_dir, 'labels', file_path) #로컬개발 환경
+            print(file_path)
+            file_path = file_path.replace('\\','/')
+            print(file_path)
             
-            product_analysis_results.save()
-        
-        # BytesIO를 Django의 File 객체로 변환하여 ImageField에 저장
-        product_analysis.image.save('image.png', image_io, save=True)
-        
-        
-        return JsonResponse({'status':"success",
-                            #  'detect_list': detect_list,
-                             })
+            detect_list = []
+            try:
+                with open(file_path, 'r') as file:
+                    for line in file:
+                        # 공백을 기준으로 분할하여 첫 번째 값 가져오기
+                        first_value = int(line.split()[0])
+                        print(labels[first_value])  # 각 행의 첫 번째 값 출력
+                        detect_list.append({'label':labels[first_value], 'weight':123})
+
+            except FileNotFoundError:
+                print(f"파일 '{file_path}'을(를) 찾을 수 없습니다.")
+                return JsonResponse({'status':"fail"})
+                
+            print(type(results[0]))
+            image_data = np.array(res_plotted, dtype=np.uint8)
+            # image = cv2.cvtColor(image_data, cv2.COLOR_RGB2BGR)  # 이미지 생성 (BGR 형식으로)
+            # print(image_data)
+            
+            # image_data를 OpenCV로 다루고 PIL Image 객체로 변환 (RGB 형식)
+            img = cv2.cvtColor(image_data, cv2.COLOR_BGR2RGB)
+            img_pil = Image.fromarray(img.astype('uint8'))
+
+            # BytesIO에 이미지 저장
+            image_io = BytesIO()
+            img_pil.save(image_io, format='PNG')  # 이미지를 원하는 형식으로 저장(PNG, JPEG 등)
+            image_io.seek(0)  # BytesIO의 파일 포인터를 처음으로 이동
+
+            # ProductAnalysis 모델 객체 생성 및 이미지 저장
+            if not os.path.exists('product/detect'):
+                os.makedirs('product/detect')
+                
+            
+
+            product_analysis = ProductAnalysis()
+            product_analysis.user = user
+            # product_analysis.result = 
+            
+            product_analysis.save()  # 데이터베이스에 모델 객체 저장
+            print(detect_list)
+            for detect in detect_list:
+                product_analysis_results = ProductAnalysisResults()
+                product_analysis_results.productAnalysis = product_analysis
+                product_analysis_results.product = None
+                product_analysis_results.result = detect['label']
+                product_analysis_results.weight = detect['weight']
+                
+                product_analysis_results.save()
+            
+            # BytesIO를 Django의 File 객체로 변환하여 ImageField에 저장
+            product_analysis.image.save('image.png', image_io, save=True)
+            
+            
+            return JsonResponse({'status':"success",
+                                #  'detect_list': detect_list,
+                                })
+        except:
+            JsonResponse({'status':"fail"})
         
     return JsonResponse({'status':"fail"})
 

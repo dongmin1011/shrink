@@ -8,7 +8,7 @@ urlpatterns = [
     # path('select', views.select),
     path('analysis', views.analysis),
     path('detect/<str:image_url>', views.get_image , name='detect_image'),
-    path('select', views.selectProduct),
+    path('select/priceChange', views.selectProduct),
     path('select/analysis_list', views.token_analysis_list),
     path('update/analysis', views.read_update),
     

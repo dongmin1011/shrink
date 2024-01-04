@@ -6,6 +6,8 @@ from product import views
 urlpatterns = [
     path('', views.index),
     # path('select', views.select),
+    path('selectall', views.selectall),
+    
     path('analysis', views.analysis),
     path('detect/<str:image_url>', views.get_image , name='detect_image'),
     path('select/priceChange', views.selectProduct),

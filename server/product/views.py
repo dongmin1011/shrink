@@ -35,6 +35,9 @@ def index(req):
             'message': 'Shrink Django 서버가 정상적으로 실행중입니다.'
         }, status=200)
         
+        
+def image_return_url(url):
+    return "https://api.dietshrink.kro.kr/api/product/detect/"+str(url)
 # def find_first_friday(year, month, id):
 #         # 주어진 연도(year)와 월(month)로 해당 달의 1일 날짜를 만듭니다.
 #         date = datetime(year, month, 1)
@@ -268,11 +271,14 @@ def token_analysis_list(req):
         analysis_results = ProductAnalysisResults.objects.filter(productAnalysis_id=analysis)
         print(list(analysis_results))
         results_list = []
+        image_url = image_return_url(analysis.id)
         for analysis_result in analysis_results:
             results_list.append({'product_id': analysis_result.product_id,
                                  'result': analysis_result.result,
                                  'weight':analysis_result.weight})
-        detect_list.append({'image_url': analysis.id,
+        detect_list.append({
+                            'id' : analysis.id,
+                            'image_url': image_url,
                             'create_at': analysis.create_at,
                             'is_reading': analysis.is_reading,
                             'result': results_list,

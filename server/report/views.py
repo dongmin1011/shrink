@@ -87,7 +87,7 @@ def write_report(req):
 
         # 저장된 이미지를 ReportImage에 저장
         report_image = ReportImage(report=report)
-        report_image.image.save('image.jpg', File(buffer), save=True)
+        report_image.image.save('image.png', File(buffer), save=True)
     return JsonResponse({
         "status": "success",
         "message": "신고가 접수되었습니다."

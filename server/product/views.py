@@ -159,9 +159,29 @@ def search_product(req):
 
 def selectall(req):
     products = list(Product.objects.all().values())
-    
-    
     return JsonResponse({'status':"success", "response":products})
+
+
+def select_id(req, query_id):
+    try:
+        product = Product.objects.get(product_id=query_id)
+        
+        price = list(PriceChange.objects.filter(product=product).order_by('date').values())
+        print(price)
+        product_info = {
+            'product_id': product.product_id,
+            'product_name': product.product_name,
+            'detail': product.detail,
+            'weight': product.weight 
+        }
+        result ={  
+                "product":product_info,
+                "price": price
+            
+            }
+        return JsonResponse({'status':"success", 'response':result})
+    except Exception as e :
+        return JsonResponse({'status':"fail", 'response':str(e)})
 
 @csrf_exempt
 @require_http_methods(["POST"])

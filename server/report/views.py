@@ -79,7 +79,7 @@ def write_report(req):
                 img = img.rotate(90, expand=True)
 
         # 이미지 리사이징
-        resized_img = img.resize((640, 640))
+        resized_img = img.resize((640, 720))
 
         # JPEG로 변환하여 품질 조절
         buffer = BytesIO()

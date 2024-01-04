@@ -62,24 +62,26 @@ def write_report(req):
         img = Image.open(image)
         print(img)
         
-        # Exif 데이터 확인
-        exif = dict(img._getexif().items()) if hasattr(img, "_getexif") else None
+        # 이미지 형식이 jpg일 때만 EXIF 데이터 확인
+        if img.format == 'JPEG' and hasattr(img, '_getexif'):
+            exif = img._getexif()
 
-        # 이미지 회전 확인 및 회전
-        if exif:
-            for orientation in ExifTags.TAGS.keys():
-                if ExifTags.TAGS[orientation] == 'Orientation':
-                    break
+            if exif is not None:
+                exif = dict(exif)
+                orientation_key = [key for key, value in ExifTags.TAGS.items() if value == 'Orientation']
+                orientation = exif.get(orientation_key[0], None) if orientation_key else None
 
-            if exif.get(orientation) == 3:
-                img = img.rotate(180, expand=True)
-            elif exif.get(orientation) == 6:
-                img = img.rotate(270, expand=True)
-            elif exif.get(orientation) == 8:
-                img = img.rotate(90, expand=True)
+                # 이미지 회전
+                if orientation == 3:
+                    img = img.rotate(180, expand=True)
+                elif orientation == 6:
+                    img = img.rotate(270, expand=True)
+                elif orientation == 8:
+                    img = img.rotate(90, expand=True)
 
+        width, height = img.size
         # 이미지 리사이징
-        resized_img = img.resize((640, 720))
+        resized_img = img.resize((width//2, height//2))
 
         # JPEG로 변환하여 품질 조절
         buffer = BytesIO()

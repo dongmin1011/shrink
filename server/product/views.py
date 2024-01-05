@@ -26,7 +26,7 @@ from ultralytics import YOLO
 
 
 load_dotenv()
-model = YOLO("yolov8n.pt")  # load a pretrained model (recommended for training)
+model = YOLO("best_ver1.pt")  # load a pretrained model (recommended for training)
 
 
 def index(req):

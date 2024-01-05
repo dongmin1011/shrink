@@ -186,16 +186,17 @@ def selectall(req): #상품 전체 조회
 
     converted_products = [image_url_and_add_shrink(product) for product in products]
 
+    try:
+        items_per_page = req.GET.get('per_page', len(converted_products))
+        page = req.GET.get('page', 1)
 
-    items_per_page = req.GET.get('per_page', len(converted_products))
-    page = req.GET.get('page', 1)
+        paginator = Paginator(converted_products, items_per_page)
 
-    paginator = Paginator(converted_products, items_per_page)
-
-    page_obj = paginator.page(page)
-    
-    return JsonResponse({'status':"success", "response":list(page_obj)})
-
+        page_obj = paginator.page(page)
+        
+        return JsonResponse({'status':"success", "response":list(page_obj)})
+    except:
+        return JsonResponse({'status':"fail"})
 
 def select_id(req, query_id): ##product id로 상품 조회(detail)
 

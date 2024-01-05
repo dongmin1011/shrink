@@ -16,6 +16,7 @@ class Product(models.Model):
     weight = models.CharField(max_length=50,null=True)
     create_at = models.DateTimeField(default=timezone.now)
     # code = models.ForeignKey(Code, on_delete=models.CASCADE)
+    image = models.ImageField(blank=True, upload_to='product/image/')
 
 #상품의 가격변화를 저장하는 DB
 class PriceChange(models.Model):

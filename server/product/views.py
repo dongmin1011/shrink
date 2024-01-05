@@ -157,22 +157,38 @@ def search_product(req):
     
     return JsonResponse({'status':"success", "response":products})
 
-def selectall(req):
-    products = list(Product.objects.all().values())
-    return JsonResponse({'status':"success", "response":products})
+def convert_image_url(product):
+    # 이미지 경로를 URL로 변환하는 로직 (예시)
+    image_url = str(product['image']).split('/')[-1]
+    # print(image_url)
+    if image_url!="":
+        product['image'] = "https://api.dietshrink.kro.kr/api/product/get_image/" + image_url
+    else:
+        product['image'] = None
+    # print(product['image'])
+    return product
+def selectall(req): #상품 전체 조회
+    products = Product.objects.all().values()
+    converted_products = list(map(convert_image_url, products))
+
+    return JsonResponse({'status':"success", "response":converted_products})
 
 
-def select_id(req, query_id):
+def select_id(req, query_id): ##product id로 상품 조회(detail)
     try:
         product = Product.objects.get(product_id=query_id)
         
         price = list(PriceChange.objects.filter(product=product).order_by('date').values())
         print(price)
+        image_url = str(product.image).split('/')[-1]
+        image_url = "https://api.dietshrink.kro.kr/api/product/get_image/" + image_url
+        # print(product.image)
         product_info = {
             'product_id': product.product_id,
             'product_name': product.product_name,
             'detail': product.detail,
-            'weight': product.weight 
+            'weight': product.weight,
+            'image_url': image_url
         }
         result ={  
                 "product":product_info,
@@ -182,6 +198,7 @@ def select_id(req, query_id):
         return JsonResponse({'status':"success", 'response':result})
     except Exception as e :
         return JsonResponse({'status':"fail", 'response':str(e)})
+
 
 @csrf_exempt
 @require_http_methods(["POST"])
@@ -336,7 +353,7 @@ def read_update(req):
             "exception": e
         })
 
-def get_image(req, image_url):
+def get_analysis_image(req, image_url):
     # 이미지가 저장된 모델에서 해당 이미지의 인스턴스를 가져옵니다.
     # return JsonResponse({'response':True})
     
@@ -349,7 +366,14 @@ def get_image(req, image_url):
     # 이미지 파일을 읽어와 HTTP 응답으로 반환합니다.
     with open(image_path, 'rb') as f:
         return HttpResponse(f.read(), content_type='image/png')  # 이미지 타입에 따라 content_type 변경 가능
-    
+
+def get_image(req, url):
+    #  image_instance = get_object_or_404(Product, pk=query_id)
+    #  image_path = image_instance.image.path
+    image_path = url.split('/')[-1]
+    image_path = 'product/image/'+image_path
+    with open(image_path, 'rb') as f:
+        return HttpResponse(f.read(), content_type='image/png')
 
 @csrf_exempt
 @require_http_methods(["POST"])
@@ -562,3 +586,25 @@ def stream_video(request):
                        b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
 
     return StreamingHttpResponse(generate_frames(), content_type='multipart/x-mixed-replace; boundary=frame')
+
+@csrf_exempt
+def upload_product_image(req, query_id):  #상품사진 업로드 할 때 사용
+    
+    if req.FILES['image']: 
+        try:
+            
+            if req.method =='POST' and req.FILES['image']:    
+                image = req.FILES['image']
+                image.name = image.name.replace(' ','')    
+                product = Product.objects.get(product_id = query_id)
+                print(image.name)
+
+                if not os.path.exists('product/image'):
+                    os.makedirs('product/image')
+                # 저장된 이미지를 ReportImage에 저장   
+                product.image.save('image.png', image, save=True)
+            
+        except Exception as e:
+            return JsonResponse({'status':False, 'response': str(e)})
+        
+    return JsonResponse({'status':True})

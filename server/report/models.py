@@ -3,6 +3,7 @@ from django.db import models
 from user_auth.models import User
 
 from django.utils import timezone
+from product.models import Product
 
 class Report(models.Model):
     
@@ -39,3 +40,9 @@ class Like(models.Model):
     class Meta:
         unique_together = ('report', 'user')
         db_table = 'report_like'
+        
+class ShrinkFlationGeneration(models.Model):
+    report = models.ForeignKey(Report, on_delete=models.CASCADE, null=True)
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, null=True, unique=True)
+    before = models.CharField(max_length=10, null=True)
+    after = models.CharField(max_length=10, null=True)

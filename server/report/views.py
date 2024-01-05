@@ -14,7 +14,8 @@ from django.core.paginator import Paginator
 from django.db.models import Count
 
 
-from .models import Like, Report, ReportImage
+from .models import Like, Report, ReportImage, ShrinkFlationGeneration
+from product.models import Product
 from django.utils import timezone
 from PIL import Image, ExifTags
 from io import BytesIO
@@ -314,6 +315,50 @@ def select_detail(req, query_id):
             'status':'fail',
             'response': None
         })
+#슈링크플레이션 발생 상품 추가
+@csrf_exempt
+@require_http_methods(["POST"])
+def create_shrink(req):
+    data = json.loads(req.body)
+    product = data.get('product', None)
+    report = data.get('report', None)
+    before = data.get('before', None)
+    after = data.get('after', None)
+    
+    try:
+        shrink = ShrinkFlationGeneration()
+        
+        if report:
+            report = Report.objects.get(id = report)
+            after= report.weight
+        if product:
+            product = Product.objects.get(product_id = product)
+            before = product.weight
+        
+        
+        shrink.report = report
+        shrink.product = product
+        shrink.before = before
+        shrink.after = after
+        
+        shrink.save()
+        return JsonResponse({'status':"success"})
+    except Exception as e: #이미 슈링크 발생한 제품 업데이트
+        shrink = ShrinkFlationGeneration.objects.get(product_id = product)
+        if report:
+            report = Report.objects.get(id = report)
+            after= report.weight
+        
+        
+        
+        shrink.report = report
+        
+        shrink.before = before
+        shrink.after = after
+        
+        shrink.save()
+        return JsonResponse({'status':"success", "response": str(e)})
+    
 
 # 신고 좋아요
 @require_http_methods(["POST"])

@@ -10,6 +10,7 @@ from django.core.files.storage import FileSystemStorage
 
 from user_auth.decorators import token_required
 from .models import *
+from report.models import ShrinkFlationGeneration
 from django.core.files import File
 
 
@@ -157,32 +158,43 @@ def search_product(req):
     
     return JsonResponse({'status':"success", "response":products})
 
-def convert_image_url(product):
-    # 이미지 경로를 URL로 변환하는 로직 (예시)
-    image_url = str(product['image']).split('/')[-1]
-    # print(image_url)
-    if image_url!="":
-        product['image'] = "https://api.dietshrink.kro.kr/api/product/get_image/" + image_url
-    else:
-        product['image'] = None
-    # print(product['image'])
-    return product
+
 def selectall(req): #상품 전체 조회
+    
     products = Product.objects.all().values()
-    converted_products = list(map(convert_image_url, products))
+    shrink_list = ShrinkFlationGeneration.objects.values_list('product_id', flat=True)
+    shrink_info = {
+        shrink.product_id: {
+            'before': shrink.before,
+            'after': shrink.after
+        } for shrink in ShrinkFlationGeneration.objects.all()
+    }
+
+    def image_url_and_add_shrink(product):
+        image_url = str(product['image']).split('/')[-1]
+        product['image'] = f"https://api.dietshrink.kro.kr/api/product/get_image/{image_url}" if image_url != "" else None
+        
+        product_id = product['product_id']
+        product['is_shrink'] = product_id in shrink_list
+        product['shrink'] = shrink_info.get(product_id) if product_id in shrink_info else None
+    
+        return product
+
+    converted_products = [image_url_and_add_shrink(product) for product in products]
 
     return JsonResponse({'status':"success", "response":converted_products})
 
 
 def select_id(req, query_id): ##product id로 상품 조회(detail)
+
     try:
         product = Product.objects.get(product_id=query_id)
-        
         price = list(PriceChange.objects.filter(product=product).order_by('date').values())
-        print(price)
-        image_url = str(product.image).split('/')[-1]
-        image_url = "https://api.dietshrink.kro.kr/api/product/get_image/" + image_url
-        # print(product.image)
+
+        # price_data = serializers.serialize('json', prices)
+
+        image_url = f"https://api.dietshrink.kro.kr/api/product/get_image/{str(product.image).split('/')[-1]}" if str(product.image).split('/')[-1] != "" else None
+
         product_info = {
             'product_id': product.product_id,
             'product_name': product.product_name,
@@ -190,14 +202,30 @@ def select_id(req, query_id): ##product id로 상품 조회(detail)
             'weight': product.weight,
             'image_url': image_url
         }
-        result ={  
-                "product":product_info,
-                "price": price
-            
+
+        try:
+            shrink_generation = ShrinkFlationGeneration.objects.get(product=product)  # Try to get ShrinkFlationGeneration
+            product_info['is_shrink']=True
+            shrink_info = {
+                'before': shrink_generation.before,
+                'after': shrink_generation.after
             }
-        return JsonResponse({'status':"success", 'response':result})
-    except Exception as e :
-        return JsonResponse({'status':"fail", 'response':str(e)})
+        except ShrinkFlationGeneration.DoesNotExist:
+            product_info['is_shrink']=False
+            shrink_info = None  # If ShrinkFlationGeneration does not exist
+
+
+        result = {
+            "product": product_info,
+            "shrink": shrink_info, # ShrinkFlationGeneration 정보 추가
+            "prices": price,
+            
+        }
+
+        return JsonResponse({'status': "success", 'response': result})
+    
+    except Product.DoesNotExist:
+        return JsonResponse({'status': "error", 'response': "Product does not exist"})
 
 
 @csrf_exempt

@@ -12,6 +12,7 @@ from user_auth.decorators import token_required
 from .models import *
 from report.models import ShrinkFlationGeneration
 from django.core.files import File
+from django.core.paginator import Paginator
 
 
 from bs4 import BeautifulSoup
@@ -161,6 +162,9 @@ def search_product(req):
 
 def selectall(req): #상품 전체 조회
     
+    
+    
+    
     products = Product.objects.all().values()
     shrink_list = ShrinkFlationGeneration.objects.values_list('product_id', flat=True)
     shrink_info = {
@@ -182,7 +186,15 @@ def selectall(req): #상품 전체 조회
 
     converted_products = [image_url_and_add_shrink(product) for product in products]
 
-    return JsonResponse({'status':"success", "response":converted_products})
+
+    items_per_page = req.GET.get('per_page', len(converted_products))
+    page = req.GET.get('page', 1)
+
+    paginator = Paginator(converted_products, items_per_page)
+
+    page_obj = paginator.page(page)
+    
+    return JsonResponse({'status':"success", "response":list(page_obj)})
 
 
 def select_id(req, query_id): ##product id로 상품 조회(detail)

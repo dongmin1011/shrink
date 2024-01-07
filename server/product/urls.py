@@ -19,9 +19,11 @@ urlpatterns = [
     path('search', views.search_product),
     
     path('upload_image/<str:query_id>', views.upload_product_image),
+    path('upload_new_product', views.upload_new_product),
+
     
-    path('test', views.test),
-    path('test2', views.test2),
+    # path('test', views.test),
+    # path('test2', views.test2),
     path('test3', views.yolotest),
     path('stream/', views.stream_video, name='stream_video'),
 ]

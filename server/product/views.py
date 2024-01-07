@@ -1,6 +1,7 @@
 import base64
 from io import BytesIO
 import json
+import random
 import cv2
 from django.http import HttpResponse, JsonResponse, StreamingHttpResponse
 from django.shortcuts import get_object_or_404
@@ -456,128 +457,128 @@ def selectProduct(request):  ##상품명으로 가격 정보 조회
 
 
 
-def test(req): ## 상품 api -> DB
-    URL = 'http://openapi.price.go.kr/openApiImpl/ProductPriceInfoService/getProductInfoSvc.do?serviceKey=elev%2BDdYEgCEiwXL1dcW5YyHQUrNmLOmCOsXZtLpyXOkaMQWobvID%2FLeqZAwouKbFDqLyzlqi8LvTN%2BTdAH3YA%3D%3D&'
-    response = requests.get(URL)
-    # print(response.text)
-    xml = response.text
-    text = BeautifulSoup(xml, 'xml')    
+# def test(req): ## 상품 api -> DB
+#     URL = 'http://openapi.price.go.kr/openApiImpl/ProductPriceInfoService/getProductInfoSvc.do?serviceKey=elev%2BDdYEgCEiwXL1dcW5YyHQUrNmLOmCOsXZtLpyXOkaMQWobvID%2FLeqZAwouKbFDqLyzlqi8LvTN%2BTdAH3YA%3D%3D&'
+#     response = requests.get(URL)
+#     # print(response.text)
+#     xml = response.text
+#     text = BeautifulSoup(xml, 'xml')    
 
-    items = text.find_all('item')
-    # result = set()
-    result = []
-    for item in items:
+#     items = text.find_all('item')
+#     # result = set()
+#     result = []
+#     for item in items:
         
-        good_id = item.find('goodId').text
-        # result.add(good_id)
-        good_name = item.find('goodName').text.replace(' ','')        
-        detail_mean = item.find('detailMean').text if item.find('detailMean') is not None else None
-        weight = item.find('goodTotalCnt').text if item.find('goodTotalCnt') is not None else None
-        # Product 모델에 데이터 저장
-        product = Product(
-            product_id=good_id,
-            product_name=good_name,
-            detail=detail_mean,
-            weight=weight,
-        )
-        print(product.product_id)
-        product.save()  # 데이터베이스에 저장
+#         good_id = item.find('goodId').text
+#         # result.add(good_id)
+#         good_name = item.find('goodName').text.replace(' ','')        
+#         detail_mean = item.find('detailMean').text if item.find('detailMean') is not None else None
+#         weight = item.find('goodTotalCnt').text if item.find('goodTotalCnt') is not None else None
+#         # Product 모델에 데이터 저장
+#         product = Product(
+#             product_id=good_id,
+#             product_name=good_name,
+#             detail=detail_mean,
+#             weight=weight,
+#         )
+#         print(product.product_id)
+#         product.save()  # 데이터베이스에 저장
 
                 
 
-    return JsonResponse({'response': True})
+#     return JsonResponse({'response': True})
 
 
-def find_first_friday():
-    date = datetime.now()
-    print(date.year, date.month, date.day)
-    date = datetime(date.year, date.month, date.day)
-    while True:
-        temp = date.strftime('%Y%m%d')
+# def find_first_friday():
+#     date = datetime.now()
+#     print(date.year, date.month, date.day)
+#     date = datetime(date.year, date.month, date.day)
+#     while True:
+#         temp = date.strftime('%Y%m%d')
 
-        PRICE_CHANGE_URL = f'http://openapi.price.go.kr/openApiImpl/ProductPriceInfoService/getProductPriceInfoSvc.do?serviceKey=elev%2BDdYEgCEiwXL1dcW5YyHQUrNmLOmCOsXZtLpyXOkaMQWobvID%2FLeqZAwouKbFDqLyzlqi8LvTN%2BTdAH3YA%3D%3D&goodInspectDay={temp}&goodId=1182'
-        price_change = requests.get(PRICE_CHANGE_URL).text
-        soup = BeautifulSoup(price_change, 'xml')
-        good_price_vo_exists = soup.find('iros.openapi.service.vo.goodPriceVO')
-        if not good_price_vo_exists:
-            date = date - timedelta(days=1)
-        else:
-            print(date)
-            return date
+#         PRICE_CHANGE_URL = f'http://openapi.price.go.kr/openApiImpl/ProductPriceInfoService/getProductPriceInfoSvc.do?serviceKey=elev%2BDdYEgCEiwXL1dcW5YyHQUrNmLOmCOsXZtLpyXOkaMQWobvID%2FLeqZAwouKbFDqLyzlqi8LvTN%2BTdAH3YA%3D%3D&goodInspectDay={temp}&goodId=1182'
+#         price_change = requests.get(PRICE_CHANGE_URL).text
+#         soup = BeautifulSoup(price_change, 'xml')
+#         good_price_vo_exists = soup.find('iros.openapi.service.vo.goodPriceVO')
+#         if not good_price_vo_exists:
+#             date = date - timedelta(days=1)
+#         else:
+#             print(date)
+#             return date
     
 
-def test2(req): # 상품정보로 가격정보 저장
-    products = Product.objects.all()
-    print(len(products))
-    result = []
-    # print(find_first_friday())
-    date = find_first_friday()
-    # date = datetime(23, 12, 22)
-    # date = date.strftime('%Y%m%d')
-    while True:
+# def test2(req): # 상품정보로 가격정보 저장
+#     products = Product.objects.all()
+#     print(len(products))
+#     result = []
+#     # print(find_first_friday())
+#     date = find_first_friday()
+#     # date = datetime(23, 12, 22)
+#     # date = date.strftime('%Y%m%d')
+#     while True:
         
-        temp = date.strftime('%Y%m%d')
-        formatted_date = datetime.strptime(temp, '%Y%m%d').date()
-        for product in products:
-            print(product.product_id, product.product_name)
-            result = PriceChange.objects.filter(product_id=product.product_id, date=formatted_date)
-            # 결과가 있는 경우에만 continue
-            if result.exists():
-                continue
+#         temp = date.strftime('%Y%m%d')
+#         formatted_date = datetime.strptime(temp, '%Y%m%d').date()
+#         for product in products:
+#             print(product.product_id, product.product_name)
+#             result = PriceChange.objects.filter(product_id=product.product_id, date=formatted_date)
+#             # 결과가 있는 경우에만 continue
+#             if result.exists():
+#                 continue
 
-            try:
-                PRICE_CHANGE_URL = f'http://openapi.price.go.kr/openApiImpl/ProductPriceInfoService/getProductPriceInfoSvc.do?serviceKey=elev%2BDdYEgCEiwXL1dcW5YyHQUrNmLOmCOsXZtLpyXOkaMQWobvID%2FLeqZAwouKbFDqLyzlqi8LvTN%2BTdAH3YA%3D%3D&goodInspectDay={temp}&goodId={product.product_id}'
-                price_change = requests.get(PRICE_CHANGE_URL).text
-                # price_change.raise_for_status()
-            except requests.exceptions.RequestException as e:
-                print(f"요청 중 오류 발생: {e}")
-            # print(price_change)
-            soup = BeautifulSoup(price_change, 'xml')
-            # print(soup)
-            max_price = 0
-            min_price = float('inf')
-            # date = '20231222'
-            mean_price = 0
-            count = 0
-            good_price_vo_exists = soup.find('iros.openapi.service.vo.goodPriceVO')
-            if not good_price_vo_exists:
-                print('-'*30, 'continue')
-                continue
-            for item in soup.find_all('iros.openapi.service.vo.goodPriceVO'):
-                price = int(item.find('goodPrice').text)
-                mean_price += price
-                count+=1
-                max_price = max(max_price, price)
-                min_price = min(min_price, price)
-                # print(price)
-            # print(count)
-            try: 
-                mean_price = mean_price//count
-                print(max_price, min_price, mean_price)
-                # result.append((max_price, min_price, mean_price))
-            except ZeroDivisionError:
-                # result.append(None)
-                mean_price = None
-                max_price = None
-                min_price = None
-                print(None)
-            # break
-            print('-'*30,date)
-            price_change = PriceChange(
-                product = product,
-                date = date,
-                price = mean_price,
-                max_price = max_price,
-                min_price = min_price
-            )
-            price_change.save()
-        date = date - timedelta(days=14)
-        if date<datetime(2018,8,31):
-            break
+#             try:
+#                 PRICE_CHANGE_URL = f'http://openapi.price.go.kr/openApiImpl/ProductPriceInfoService/getProductPriceInfoSvc.do?serviceKey=elev%2BDdYEgCEiwXL1dcW5YyHQUrNmLOmCOsXZtLpyXOkaMQWobvID%2FLeqZAwouKbFDqLyzlqi8LvTN%2BTdAH3YA%3D%3D&goodInspectDay={temp}&goodId={product.product_id}'
+#                 price_change = requests.get(PRICE_CHANGE_URL).text
+#                 # price_change.raise_for_status()
+#             except requests.exceptions.RequestException as e:
+#                 print(f"요청 중 오류 발생: {e}")
+#             # print(price_change)
+#             soup = BeautifulSoup(price_change, 'xml')
+#             # print(soup)
+#             max_price = 0
+#             min_price = float('inf')
+#             # date = '20231222'
+#             mean_price = 0
+#             count = 0
+#             good_price_vo_exists = soup.find('iros.openapi.service.vo.goodPriceVO')
+#             if not good_price_vo_exists:
+#                 print('-'*30, 'continue')
+#                 continue
+#             for item in soup.find_all('iros.openapi.service.vo.goodPriceVO'):
+#                 price = int(item.find('goodPrice').text)
+#                 mean_price += price
+#                 count+=1
+#                 max_price = max(max_price, price)
+#                 min_price = min(min_price, price)
+#                 # print(price)
+#             # print(count)
+#             try: 
+#                 mean_price = mean_price//count
+#                 print(max_price, min_price, mean_price)
+#                 # result.append((max_price, min_price, mean_price))
+#             except ZeroDivisionError:
+#                 # result.append(None)
+#                 mean_price = None
+#                 max_price = None
+#                 min_price = None
+#                 print(None)
+#             # break
+#             print('-'*30,date)
+#             price_change = PriceChange(
+#                 product = product,
+#                 date = date,
+#                 price = mean_price,
+#                 max_price = max_price,
+#                 min_price = min_price
+#             )
+#             price_change.save()
+#         date = date - timedelta(days=14)
+#         if date<datetime(2018,8,31):
+#             break
         
         
         
-    return JsonResponse({'response': True})
+#     return JsonResponse({'response': True})
 
 
 def yolotest(req):
@@ -649,3 +650,50 @@ def upload_product_image(req, query_id):  #상품사진 업로드 할 때 사용
             return JsonResponse({'status':False, 'response': str(e)})
         
     return JsonResponse({'status':True})
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def upload_new_product(req):  #새로운 상품을 추가할 때 사용
+    
+    
+    json_data = json.loads(req.POST['data'])  # JSON 데이터 가져오기
+
+    product_name = json_data.get('product').replace(' ','')
+    weight = json_data.get('weight', None)
+    detail = json_data.get('detail', None)
+      
+    image = req.FILES.get('image')
+    # image = req.FILES['image'] if req.FILES['image'] else None
+    
+    product = Product()
+    product.product_name = product_name
+    product.weight = weight
+    product.detail = detail
+    if image:
+        product.image.save('image.png', image, save=True)
+    else:
+        product.image =None
+        
+    if image:
+        product.image.save('image.png', image, save=True)
+        pass
+    else:
+        # 'image' 파일이 없는 경우의 처리
+        # 필요한 로직 수행
+        pass
+    
+    while True:
+        rand = random.randint(100000, 999999)
+        
+        try:
+            # 이미 해당 product_id를 가진 객체가 존재하는지 확인
+            existing_product = Product.objects.get(product_id=rand)
+        except Product.DoesNotExist:
+            # 해당 product_id를 가진 객체가 없으면 새로운 객체 생성 후 저장
+            product.product_id = rand
+            # 나머지 필드들을 설정하고 저장하는 로직 추가
+            product.save()
+            break  # 중복되지 않는 product_id가 생성되었으므로 while 루프 종료
+    
+    
+    return JsonResponse({"status": True, 'product': product.product_id})

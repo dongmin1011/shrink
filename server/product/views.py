@@ -28,7 +28,7 @@ from ultralytics import YOLO
 
 
 load_dotenv()
-model = YOLO("best_ver1.pt")  # load a pretrained model (recommended for training)
+model = YOLO("front_best_ver1.pt")  # load a pretrained model (recommended for training)
 
 
 def index(req):
@@ -266,7 +266,9 @@ def analysis(req):
             # os.remove(file_url)
             res_plotted = results[0].plot()
             print('-'*30, results[0])
-            labels = results[0].names
+            # labels = results[0].names
+            # 참크래커, 닥터유에너지바, 허니버터아몬드, 핫브레이크, 오예스, 양파링, 오징어집, 포카칩, 새우깡, 비요뜨
+            labels = ['614', '1017', '1182', '343926', '1198', '535768', '529703', '984', '991', '772678']
             file_path = results[0].path
             save_dir = results[0].save_dir
             file_path = file_path.split('/')[-1].split('.')[0]+'.txt'#aws개발 환경
@@ -277,20 +279,30 @@ def analysis(req):
             file_path = file_path.replace('\\','/')
             print(file_path)
             
-            detect_list = []
+
+            detect_set = set()
             try:
                 with open(file_path, 'r') as file:
                     for line in file:
                         # 공백을 기준으로 분할하여 첫 번째 값 가져오기
                         first_value = int(line.split()[0])
                         print(labels[first_value])  # 각 행의 첫 번째 값 출력
-                        detect_list.append({'label':labels[first_value], 'weight':123})
+                        # detect_list.append({'label':labels[first_value], 'weight':123})
+                        detect_set.add(labels[first_value])
+                    
+                detect_list = []
+                for detect in list(detect_set):
+                    product = Product.objects.get(product_id=detect)
+                    # print()
+                    detect_list.append({'id':product.product_id, 'label':product.product_name, 'weight':product.weight})
 
-            except FileNotFoundError:
+            except FileNotFoundError as e:
                 print(f"파일 '{file_path}'을(를) 찾을 수 없습니다.")
-                return JsonResponse({'status':"fail"})
+                return JsonResponse({'status':"fail", "message":str(e)})
+            
                 
-            print(type(results[0]))
+                
+            # print(type(results[0]))
             image_data = np.array(res_plotted, dtype=np.uint8)
             # image = cv2.cvtColor(image_data, cv2.COLOR_RGB2BGR)  # 이미지 생성 (BGR 형식으로)
             # print(image_data)
@@ -307,35 +319,39 @@ def analysis(req):
             # ProductAnalysis 모델 객체 생성 및 이미지 저장
             if not os.path.exists('product/detect'):
                 os.makedirs('product/detect')
-                
+            # img_pil.show()
             
 
             product_analysis = ProductAnalysis()
             product_analysis.user = user
             # product_analysis.result = 
-            
+            product_analysis.image.save('image.png', image_io, save=True)
             product_analysis.save()  # 데이터베이스에 모델 객체 저장
+            print(product_analysis)
             print(detect_list)
             for detect in detect_list:
                 product_analysis_results = ProductAnalysisResults()
                 product_analysis_results.productAnalysis = product_analysis
-                product_analysis_results.product = None
+                product = Product.objects.get(product_id=detect['id'])
+                # product= None
+                product_analysis_results.product = product
+                print(detect['label'], detect['weight'])
                 product_analysis_results.result = detect['label']
                 product_analysis_results.weight = detect['weight']
                 
                 product_analysis_results.save()
-            
+                print(product.product_id)
             # BytesIO를 Django의 File 객체로 변환하여 ImageField에 저장
-            product_analysis.image.save('image.png', image_io, save=True)
+            
             
             
             return JsonResponse({'status':"success",
                                 #  'detect_list': detect_list,
                                 })
-        except:
-            JsonResponse({'status':"fail"})
+        except Exception as e:
+            JsonResponse({'status':"fail", "message":str(e)})
         
-    return JsonResponse({'status':"fail"})
+    return JsonResponse({'status':"fail", "message":"123"})
 
 
 @csrf_exempt
@@ -353,12 +369,17 @@ def token_analysis_list(req):
     response = {}
     detect_list = []
     for analysis in product_analysis:
-        print(analysis.image.path)
+        
+        
         
         analysis_results = ProductAnalysisResults.objects.filter(productAnalysis_id=analysis)
         print(list(analysis_results))
         results_list = []
-        image_url = image_return_url(analysis.id)
+        if analysis.image:
+            print(analysis.image.path)
+            image_url = image_return_url(analysis.id)
+        else:
+            image_url=None
         for analysis_result in analysis_results:
             results_list.append({'product_id': analysis_result.product_id,
                                  'result': analysis_result.result,

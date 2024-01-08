@@ -406,6 +406,7 @@ def token_analysis_list(req):
                             })
         # detect_list.append({})
     response['status'] = "success"
+    response['test'] = "yujin"
     response['response'] = detect_list
     return JsonResponse(  response  )
 @csrf_exempt

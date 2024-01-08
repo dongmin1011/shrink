@@ -330,6 +330,9 @@ def analysis(req):
             product_analysis.save()  # 데이터베이스에 모델 객체 저장
             print(product_analysis)
             print(detect_list)
+            result = {'status':"success",
+                              
+                                }
             for detect in detect_list:
                 product_analysis_results = ProductAnalysisResults()
                 product_analysis_results.productAnalysis = product_analysis
@@ -343,12 +346,14 @@ def analysis(req):
                 product_analysis_results.save()
                 print(product.product_id)
             # BytesIO를 Django의 File 객체로 변환하여 ImageField에 저장
+                
+                try:
+                    ShrinkFlationGeneration.objects.get(product_id = detect['id'])
+                    result['is_shrink']=True
+                except:
+                    result['is_shrink']=False
             
-            
-            
-            return JsonResponse({'status':"success",
-                                #  'detect_list': detect_list,
-                                })
+            return JsonResponse(result)
         except Exception as e:
             JsonResponse({'status':"fail", "message":str(e)})
         

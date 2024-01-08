@@ -335,7 +335,7 @@ def analysis(req):
             
             
             # result[] = 0
-            r
+            
             for detect in detect_list:
                 product_analysis_results = ProductAnalysisResults()
                 product_analysis_results.productAnalysis = product_analysis

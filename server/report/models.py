@@ -43,6 +43,6 @@ class Like(models.Model):
         
 class ShrinkFlationGeneration(models.Model):
     report = models.ForeignKey(Report, on_delete=models.CASCADE, null=True)
-    product = models.ForeignKey(Product, on_delete=models.CASCADE, null=True, unique=True)
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, unique=True)
     before = models.CharField(max_length=10, null=True)
     after = models.CharField(max_length=10, null=True)

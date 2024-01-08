@@ -331,10 +331,11 @@ def analysis(req):
             product_analysis.save()  # 데이터베이스에 모델 객체 저장
             print(product_analysis)
             print(detect_list)
-            result = {'status':"success",'is_doubt': 0}
+            result = {'status':"success",'is_doubt': 0, 'is_shrink':False}
             
             
             # result[] = 0
+            r
             for detect in detect_list:
                 product_analysis_results = ProductAnalysisResults()
                 product_analysis_results.productAnalysis = product_analysis

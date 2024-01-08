@@ -370,8 +370,6 @@ def token_analysis_list(req):
     detect_list = []
     for analysis in product_analysis:
         
-        
-        
         analysis_results = ProductAnalysisResults.objects.filter(productAnalysis_id=analysis)
         print(list(analysis_results))
         results_list = []
@@ -429,6 +427,23 @@ def read_update(req):
             'status':"fail",
             "exception": e
         })
+
+@csrf_exempt
+@require_http_methods(["DELETE"])
+@token_required
+def delete_analysis_list(req):
+    try:
+        data = json.loads(req.body)
+        id = data.get('id')
+        ProductAnalysis.objects.get(id=id).delete()
+        
+        return JsonResponse({"status": "success"})
+    except Exception as e:
+        return JsonResponse({
+            'status':"fail",
+            "message": str(e)
+        })
+    
 
 def get_analysis_image(req, image_url):
     # 이미지가 저장된 모델에서 해당 이미지의 인스턴스를 가져옵니다.

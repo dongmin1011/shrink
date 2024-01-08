@@ -28,7 +28,7 @@ from ultralytics import YOLO
 
 
 load_dotenv()
-model = YOLO("front_best_ver5.pt")  # load a pretrained model (recommended for training)
+model = YOLO("front_best_ver6_yolov8s.pt")  # load a pretrained model (recommended for training)
 
 
 def index(req):
@@ -480,13 +480,14 @@ def get_analysis_image(req, image_url):
     # return JsonResponse({'response':True})
     
     print(123123)
-    image_instance = get_object_or_404(ProductAnalysis, pk=image_url)
+    # image_url = image_url.split('/')[-1]
+    # image_instance = get_object_or_404(ProductAnalysis, pk=image_url)
     
-    # 이미지 파일의 경로를 가져옵니다.
-    image_path = image_instance.image.path
-    print(image_path)
+    # # 이미지 파일의 경로를 가져옵니다.
+    # image_path = image_instance.image.path
+    # print(image_path)
     # 이미지 파일을 읽어와 HTTP 응답으로 반환합니다.
-    with open(image_path, 'rb') as f:
+    with open(image_url, 'rb') as f:
         return HttpResponse(f.read(), content_type='image/png')  # 이미지 타입에 따라 content_type 변경 가능
 
 def get_image(req, url):

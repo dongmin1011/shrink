@@ -331,10 +331,10 @@ def analysis(req):
             product_analysis.save()  # 데이터베이스에 모델 객체 저장
             print(product_analysis)
             print(detect_list)
-            result = {'status':"success",}
+            result = {'status':"success",'is_doubt': 0}
             
             
-            result['is_doubt'] = 0
+            # result[] = 0
             for detect in detect_list:
                 product_analysis_results = ProductAnalysisResults()
                 product_analysis_results.productAnalysis = product_analysis
@@ -348,12 +348,12 @@ def analysis(req):
                 product_analysis_results.save()
                 # print(product.product_id)
                 
-                report_count = 0
-                reports = Report.objects.filter(product_id = detect['id'])
-                for report in reports:
-                    report_count+=1
-                # print(report_count)
-                    report_count+=Like.objects.filter(report_id = report.id).count()
+                # report_count = 0
+                # reports = Report.objects.filter(product_id = detect['id'])
+                # for report in reports:
+                #     report_count+=1
+                # # print(report_count)
+                #     report_count+=Like.objects.filter(report_id = report.id).count()
                 
             # BytesIO를 Django의 File 객체로 변환하여 ImageField에 저장
                 
@@ -364,7 +364,7 @@ def analysis(req):
                 except:
                     if not result['is_shrink']:
                         result['is_shrink']=False
-                result['is_doubt'] = max(result['is_doubt'], report_count)
+                # result['is_doubt'] = max(result['is_doubt'], report_count)
             return JsonResponse(result)
         except Exception as e:
             JsonResponse({'status':"fail", "message":str(e)})

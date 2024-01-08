@@ -13,6 +13,7 @@ class Report(models.Model):
         (3, '슈링크'),
     ]
     user = models.ForeignKey(User, on_delete=models.CASCADE)
+    product =  models.ForeignKey(Product, on_delete=models.CASCADE, null=True)
     product_name = models.CharField(max_length=100)
     price = models.IntegerField()
     weight = models.CharField(max_length=50)

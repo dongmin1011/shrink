@@ -40,6 +40,7 @@ def write_report(req):
     json_data = json.loads(req.POST['data'])  # JSON 데이터 가져오기
 
     product = json_data.get('product')
+    product_name = json_data.get('product_name')
     weight = json_data.get('weight')
     price = int(json_data.get('price'))
     content = json_data.get('content')
@@ -48,11 +49,13 @@ def write_report(req):
     print(unit)
     
     # existing_user = User.objects.get(phone='01066594660')
+    product = Product.objects.get(product_id = product)
     report = Report.objects.create(
         user=existing_user,  # 위에서 가져온 기존 User 객체를 연결합니다
         created_at=timezone.now(),
         price=price,
-        product_name=product,
+        product=product,
+        product_name = product_name,
         weight = weight,
         content = content,
         unit = unit,

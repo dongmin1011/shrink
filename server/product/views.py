@@ -334,7 +334,7 @@ def analysis(req):
             result = {'status':"success",}
             
             
-            
+            result['is_doubt'] = 0
             for detect in detect_list:
                 product_analysis_results = ProductAnalysisResults()
                 product_analysis_results.productAnalysis = product_analysis
@@ -364,7 +364,7 @@ def analysis(req):
                 except:
                     if not result['is_shrink']:
                         result['is_shrink']=False
-                result['is_doubt'] = report_count
+                result['is_doubt'] = max(result['is_doubt'], report_count)
             return JsonResponse(result)
         except Exception as e:
             JsonResponse({'status':"fail", "message":str(e)})

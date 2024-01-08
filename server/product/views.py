@@ -11,7 +11,7 @@ from django.core.files.storage import FileSystemStorage
 
 from user_auth.decorators import token_required
 from .models import *
-from report.models import ShrinkFlationGeneration
+from report.models import ShrinkFlationGeneration, Report, Like
 from django.core.files import File
 from django.core.paginator import Paginator
 
@@ -273,10 +273,10 @@ def analysis(req):
             labels = ['772678','1182', '343926', '1198', '535768', '529703', '984', '991']
             file_path = results[0].path
             save_dir = results[0].save_dir
-            file_path = file_path.split('/')[-1].split('.')[0]+'.txt'#aws개발 환경
-            file_path = save_dir+'/labels/'+file_path             #aws개발 환경
-            # file_path = file_path.split('\\')[-1].split('.')[0]+'.txt'#로컬개발 환경
-            # file_path = os.path.join(save_dir, 'labels', file_path) #로컬개발 환경
+            # file_path = file_path.split('/')[-1].split('.')[0]+'.txt'#aws개발 환경
+            # file_path = save_dir+'/labels/'+file_path             #aws개발 환경
+            file_path = file_path.split('\\')[-1].split('.')[0]+'.txt'#로컬개발 환경
+            file_path = os.path.join(save_dir, 'labels', file_path) #로컬개발 환경
             print(file_path)
             file_path = file_path.replace('\\','/')
             print(file_path)
@@ -331,9 +331,10 @@ def analysis(req):
             product_analysis.save()  # 데이터베이스에 모델 객체 저장
             print(product_analysis)
             print(detect_list)
-            result = {'status':"success",
-                              
-                                }
+            result = {'status':"success",}
+            
+            
+            
             for detect in detect_list:
                 product_analysis_results = ProductAnalysisResults()
                 product_analysis_results.productAnalysis = product_analysis
@@ -345,15 +346,25 @@ def analysis(req):
                 product_analysis_results.weight = detect['weight']
                 
                 product_analysis_results.save()
-                print(product.product_id)
+                # print(product.product_id)
+                
+                report_count = 0
+                reports = Report.objects.filter(product_id = detect['id'])
+                for report in reports:
+                    report_count+=1
+                # print(report_count)
+                    report_count+=Like.objects.filter(report_id = report.id).count()
+                
             # BytesIO를 Django의 File 객체로 변환하여 ImageField에 저장
                 
                 try:
                     ShrinkFlationGeneration.objects.get(product_id = detect['id'])
                     result['is_shrink']=True
+                    
                 except:
-                    result['is_shrink']=False
-            
+                    if not result['is_shrink']:
+                        result['is_shrink']=False
+                result['is_doubt'] = report_count
             return JsonResponse(result)
         except Exception as e:
             JsonResponse({'status':"fail", "message":str(e)})
@@ -394,12 +405,21 @@ def token_analysis_list(req):
                 'result': analysis_result.result,
                 'weight':analysis_result.weight
             }
+            report_count = 0
+            reports = Report.objects.filter(product_id = analysis_result.product_id)
+            for report in reports:
+                report_count+=1
+            # print(report_count)
+                report_count+=Like.objects.filter(report_id = report.id).count()
+            print(report_count) ##좋아요  + 신고 개수 반환
             try:
                 ShrinkFlationGeneration.objects.get(product_id = analysis_result.product_id)
                 temp['is_shrink']=True
+                
                 is_shrink = True
             except:
                 temp['is_shrink']=False
+            temp['is_doubt']=report_count
             results_list.append(temp)
             product_name = analysis_result.result
             print(product_name)

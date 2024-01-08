@@ -28,7 +28,7 @@ from ultralytics import YOLO
 
 
 load_dotenv()
-model = YOLO("front_best_ver1.pt")  # load a pretrained model (recommended for training)
+model = YOLO("front_best_ver4.pt")  # load a pretrained model (recommended for training)
 
 
 def index(req):
@@ -268,7 +268,8 @@ def analysis(req):
             print('-'*30, results[0])
             # labels = results[0].names
             # 참크래커, 닥터유에너지바, 허니버터아몬드, 핫브레이크, 오예스, 양파링, 오징어집, 포카칩, 새우깡, 비요뜨
-            labels = ['614', '1017', '1182', '343926', '1198', '535768', '529703', '984', '991', '772678']
+            # labels = ['614', '1017', '1182', '343926', '1198', '535768', '529703', '984', '991', '772678']
+            labels = ['772678', '343926', '1198', '535768', '529703', '984', '991']
             file_path = results[0].path
             save_dir = results[0].save_dir
             file_path = file_path.split('/')[-1].split('.')[0]+'.txt'#aws개발 환경
@@ -428,6 +429,7 @@ def read_update(req):
             "exception": e
         })
 
+#인식 결과 삭제
 @csrf_exempt
 @require_http_methods(["DELETE"])
 @token_required

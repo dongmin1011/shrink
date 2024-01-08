@@ -380,6 +380,8 @@ def token_analysis_list(req):
             image_url = image_return_url(analysis.id)
         else:
             image_url=None
+            
+        is_shrink = False
         for analysis_result in analysis_results:
             # product = Product.objects.get(product_id = analysis_result.product_id)
             temp = {
@@ -388,8 +390,9 @@ def token_analysis_list(req):
                 'weight':analysis_result.weight
             }
             try:
-                ShrinkFlationGeneration.objects.get(product = analysis.product)
+                ShrinkFlationGeneration.objects.get(product_id = analysis_result.product_id)
                 temp['is_shrink']=True
+                is_shrink = True
             except:
                 temp['is_shrink']=False
             
@@ -397,6 +400,7 @@ def token_analysis_list(req):
         detect_list.append({
                             'id' : analysis.id,
                             'image_url': image_url,
+                            'is_shrink' : is_shrink,
                             'create_at': analysis.create_at,
                             'is_reading': analysis.is_reading,
                             'result': results_list,

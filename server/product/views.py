@@ -367,7 +367,7 @@ def analysis(req):
                 # result['is_doubt'] = max(result['is_doubt'], report_count)
             return JsonResponse(result)
         except Exception as e:
-            JsonResponse({'status':"fail", "message":str(e)})
+            return JsonResponse({'status':"fail", "message":str(e)})
         
     return JsonResponse({'status':"fail", "message":"123"})
 

@@ -480,7 +480,7 @@ def get_analysis_image(req, image_url):
     # return JsonResponse({'response':True})
     
     print(123123)
-    image_url = image_url.split('/')[-1]
+    
     image_instance = get_object_or_404(ProductAnalysis, pk=image_url)
     
     # 이미지 파일의 경로를 가져옵니다.

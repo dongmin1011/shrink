@@ -349,8 +349,6 @@ def create_shrink(req):
             report = Report.objects.get(id = report)
             after= report.weight
         
-        
-        
         shrink.report = report
         
         shrink.before = before
@@ -358,7 +356,40 @@ def create_shrink(req):
         
         shrink.save()
         return JsonResponse({'status':"success", "response": str(e)})
+
+#슈링크플레이션 발생 상품 삭제
+@csrf_exempt
+@require_http_methods(["DELETE"])   
+def delete_shrink(req):
+    try:
+        data = json.loads(req.body)
+        product = data.get('product', None)
+        report = data.get('report', None)
+        
+        if report:
+            report = Report.objects.get(id=report)
+            ShrinkFlationGeneration.objects.get(report=report).delete()
+        elif product:
+            product = Product.objects.get(product_id=product)
+            ShrinkFlationGeneration.objects.get(product=product).delete()
+        
+        
+        
+        return JsonResponse({'status':"success"})
+    except Exception as e :
+        return JsonResponse({'status':"fail", "message":str(e)})
+
+#슈링크플레이션 발생 상품 조회
+@csrf_exempt
+@require_http_methods(["GET"])
+def select_shrink(req):
+    try:
+        shrink = ShrinkFlationGeneration.objects.all().values()
     
+        return JsonResponse({'status':"success", 'response': list(shrink)})
+    except:
+        return JsonResponse({'status':"fail"})
+        
 
 # 신고 좋아요
 @require_http_methods(["POST"])

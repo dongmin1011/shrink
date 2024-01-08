@@ -19,6 +19,9 @@ urlpatterns = [
     path('is_report/<int:query_id>', views.is_your_report), #로그인 유저의 게시물인지 확인
     
     path('create_shrink', views.create_shrink), #슈링크플레이션 발생 상품 추가
+    path('delete_shrink',views.delete_shrink),#슈링크플레이션 발생 상품 삭제
+    path('select_shrink',views.select_shrink),#슈링크플레이션 발생 상품 삭제
+    
     
     path('select/image/<str:image_url>', views.get_image),
 ]

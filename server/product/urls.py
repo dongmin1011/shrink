@@ -14,6 +14,7 @@ urlpatterns = [
     path('detect/<str:image_url>', views.get_analysis_image , name='detect_image'),
     path('select/priceChange', views.selectProduct),
     path('select/analysis_list', views.token_analysis_list),
+    path('delete/analysis_list', views.delete_analysis_list),
     path('update/analysis', views.read_update),
     
     path('search', views.search_product),

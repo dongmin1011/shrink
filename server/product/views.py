@@ -262,7 +262,7 @@ def analysis(req):
             file_url = '.'+file_url
             
 
-            results = model.predict(file_url,  save_txt=True)
+            results = model.predict(file_url,  save_txt=True, conf=0.45, iou=0.5)
             # os.remove(file_url)
             res_plotted = results[0].plot()
             print('-'*30, results[0])

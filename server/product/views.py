@@ -399,6 +399,7 @@ def token_analysis_list(req):
             image_url=None
             
         is_shrink = False
+        max_doubt = 0
         for analysis_result in analysis_results:
             # product = Product.objects.get(product_id = analysis_result.product_id)
             temp = {
@@ -421,15 +422,17 @@ def token_analysis_list(req):
             except:
                 temp['is_shrink']=False
             temp['is_doubt']=report_count
+            max_doubt = max(max_doubt, report_count)
             results_list.append(temp)
             product_name = analysis_result.result
             print(product_name)
-            
+        
         detect_list.append({
                             'id' : analysis.id,
                             'image_url': image_url,
                             'is_shrink' : is_shrink,
                             'create_at': analysis.create_at,
+                            'is_doubt' : max_doubt,
                             'is_reading': analysis.is_reading,
                             'result': results_list,
                             })
